@@ -1,0 +1,166 @@
+<project>
+    <shortName>icat</shortName>
+    <fullName>ICAT</fullName>
+    <version>1.0</version>
+    <readmeFile>README.txt</readmeFile>
+    <licenseFile>LICENSE.txt</licenseFile>
+    <leftImage>logo.gif</leftImage>
+    <logoImage>small.gif</logoImage>
+    <splashImage>logo.gif</splashImage>
+    <componentList>
+        <component>
+            <name>default</name>
+            <description>Default Component</description>
+            <canBeEdited>0</canBeEdited>
+            <selected>1</selected>
+            <show>0</show>
+            <folderList>
+                <folder>
+                    <description>Program Files</description>
+                    <destination>${installdir}</destination>
+                    <name>programfiles</name>
+                    <platforms>all</platforms>
+                    <shortcutList>
+                        <shortcut>
+                            <comment>Uninstall</comment>
+                            <exec>${installdir}/${uninstallerName}</exec>
+                            <icon></icon>
+                            <name>Uninstall ${product_fullname}</name>
+                            <path>${installdir}</path>
+                            <platforms>all</platforms>
+                            <runAsAdmin>0</runAsAdmin>
+                            <runInTerminal>0</runInTerminal>
+                            <windowsExec>${installdir}/${uninstallerName}.exe</windowsExec>
+                            <windowsExecArgs></windowsExecArgs>
+                            <windowsIcon></windowsIcon>
+                            <windowsPath>${installdir}</windowsPath>
+                        </shortcut>
+                    </shortcutList>
+                </folder>
+                <folder>
+                    <description>Program Files</description>
+                    <destination>${installdir}</destination>
+                    <name>programfileslinux</name>
+                    <platforms>linux</platforms>
+                </folder>
+                <folder>
+                    <description>Program Files</description>
+                    <destination>${installdir}</destination>
+                    <name>programfileswindows</name>
+                    <platforms>windows</platforms>
+                </folder>
+                <folder>
+                    <description>Program Files</description>
+                    <destination>${installdir}</destination>
+                    <name>programfilesosx</name>
+                    <platforms>osx</platforms>
+                </folder>
+            </folderList>
+            <startMenuShortcutList>
+                <startMenuShortcut>
+                    <comment>Uninstall ${product_fullname}</comment>
+                    <name>Uninstall ${product_fullname}</name>
+                    <runAsAdmin>0</runAsAdmin>
+                    <runInTerminal>0</runInTerminal>
+                    <windowsExec>${installdir}/${uninstallerName}.exe</windowsExec>
+                    <windowsExecArgs></windowsExecArgs>
+                    <windowsIcon></windowsIcon>
+                    <windowsPath>${installdir}/</windowsPath>
+                </startMenuShortcut>
+            </startMenuShortcutList>
+        </component>
+        <component>
+            <name>MySQL</name>
+            <description>MySQL Server</description>
+            <canBeEdited>0</canBeEdited>
+            <selected>1</selected>
+            <show>0</show>
+        </component>
+        <componentGroup>
+            <name>Glassfish</name>
+            <description>Authenticators</description>
+            <canBeEdited>1</canBeEdited>
+            <selected>1</selected>
+            <show>1</show>
+            <componentList>
+                <component>
+                    <name>anonymous</name>
+                    <description>Anonymous Authenticator</description>
+                    <canBeEdited>1</canBeEdited>
+                    <detailedDescription>The anonymous authenticator accepts anyone.</detailedDescription>
+                    <selected>0</selected>
+                    <show>1</show>
+                </component>
+                <component>
+                    <name>authn_simple</name>
+                    <description>Simple Authenticator</description>
+                    <canBeEdited>1</canBeEdited>
+                    <detailedDescription>Users and passwords are listed in a file</detailedDescription>
+                    <selected>0</selected>
+                    <show>1</show>
+                </component>
+                <component>
+                    <name>ldap</name>
+                    <description>LDAP Authenticator</description>
+                    <canBeEdited>1</canBeEdited>
+                    <detailedDescription>An authenticator that makes use of the contents of an LDAP database.</detailedDescription>
+                    <selected>0</selected>
+                    <show>1</show>
+                </component>
+            </componentList>
+        </componentGroup>
+        <component>
+            <name>icat_server</name>
+            <description>The ICAT server</description>
+            <canBeEdited>0</canBeEdited>
+            <detailedDescription>This is the main ICAT server for the metadata.</detailedDescription>
+            <selected>1</selected>
+            <show>1</show>
+        </component>
+        <component>
+            <name>ids_server</name>
+            <description>The IDS server</description>
+            <canBeEdited>1</canBeEdited>
+            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
+            <selected>1</selected>
+            <show>1</show>
+        </component>
+        <component>
+            <name>topcat</name>
+            <description>TopCAT</description>
+            <canBeEdited>1</canBeEdited>
+            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
+            <selected>1</selected>
+            <show>1</show>
+        </component>
+        <component>
+            <name>ijp_server</name>
+            <description>The IJP server</description>
+            <canBeEdited>1</canBeEdited>
+            <detailedDescription>This is the server to permit submission of batch and interactive jobs.</detailedDescription>
+            <selected>1</selected>
+            <show>1</show>
+        </component>
+    </componentList>
+    <allowComponentSelection>1</allowComponentSelection>
+    <enableRollback>1</enableRollback>
+    <enableTimestamp>1</enableTimestamp>
+    <saveRelativePaths>1</saveRelativePaths>
+    <vendor>ICAT Collaboration</vendor>
+    <parameterList>
+        <directoryParameter>
+            <name>installdir</name>
+            <description>Installer.Parameter.installdir.description</description>
+            <explanation>Installer.Parameter.installdir.explanation</explanation>
+            <value></value>
+            <default>${platform_install_prefix}/${product_shortname}-${product_version}</default>
+            <allowEmptyValue>0</allowEmptyValue>
+            <ask>yes</ask>
+            <cliOptionName>prefix</cliOptionName>
+            <mustBeWritable>yes</mustBeWritable>
+            <mustExist>0</mustExist>
+            <width>30</width>
+        </directoryParameter>
+    </parameterList>
+</project>
+
