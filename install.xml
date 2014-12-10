@@ -76,15 +76,88 @@
             <selected>1</selected>
             <show>0</show>
         </component>
-        <componentGroup>
+        <component>
             <name>Glassfish</name>
+            <description>Glassfish Server</description>
+            <canBeEdited>0</canBeEdited>
+            <selected>1</selected>
+            <show>0</show>
+            <folderList>
+                <folder>
+                    <description>Glassfish</description>
+                    <destination>${installdir}/distro/glassfish</destination>
+                    <name>glassfish</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile allowWildcards="1">
+                            <origin>glassfish/*</origin>
+                        </distributionFile>
+                    </distributionFileList>
+                </folder>
+            </folderList>
+            <postInstallationActionList>
+                <if>
+                    <actionList>
+                        <unzip>
+                            <destinationDirectory>${installdir}</destinationDirectory>
+                            <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile>
+                        </unzip>
+                        <runProgram>
+                            <program>python</program>
+                            <programArguments>${installdir}/distro/glassfish/setup-glassfish.py ${installdir}/glassfish4 fred</programArguments>
+                            <progressText>Installing Glassfish</progressText>
+                        </runProgram>
+                        <copyFile>
+                            <destination>${installdir}/glassfish4/glassfish/domains/domain1/lib/</destination>
+                            <origin>${installdir}/distro/glassfish/mysql-connector-java-5.1.30-bin.jar</origin>
+                        </copyFile>
+                    </actionList>
+                    <conditionRuleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${glassfish_installed}</value1>
+                            <value2>0</value2>
+                        </compareValues>
+                    </conditionRuleList>
+                </if>
+                <runProgram>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>restart-domain</programArguments>
+                    <progressText>Restarting glassfish</progressText>
+                </runProgram>
+            </postInstallationActionList>
+            <preInstallationActionList>
+                <if>
+                    <actionList>
+                        <setInstallerVariable>
+                            <name>glassfish_installed</name>
+                            <value>1</value>
+                        </setInstallerVariable>
+                    </actionList>
+                    <conditionRuleList>
+                        <fileExists>
+                            <path>${installdir}/glassfish4/glassfish/domains/domain1/config/cert</path>
+                        </fileExists>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <setInstallerVariable>
+                            <name>glassfish_installed</name>
+                            <value>0</value>
+                        </setInstallerVariable>
+                    </elseActionList>
+                </if>
+            </preInstallationActionList>
+        </component>
+        <componentGroup>
+            <name>authn</name>
             <description>Authenticators</description>
             <canBeEdited>1</canBeEdited>
+            <detailedDescription>You must include at least one authenticator to allow login to ICAT.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentList>
                 <component>
-                    <name>anonymous</name>
+                    <name>authn_anon</name>
                     <description>Anonymous Authenticator</description>
                     <canBeEdited>1</canBeEdited>
                     <detailedDescription>The anonymous authenticator accepts anyone.</detailedDescription>
@@ -100,10 +173,18 @@
                     <show>1</show>
                 </component>
                 <component>
-                    <name>ldap</name>
+                    <name>authn_ldap</name>
                     <description>LDAP Authenticator</description>
                     <canBeEdited>1</canBeEdited>
                     <detailedDescription>An authenticator that makes use of the contents of an LDAP database.</detailedDescription>
+                    <selected>0</selected>
+                    <show>1</show>
+                </component>
+                <component>
+                    <name>authn_db</name>
+                    <description>Database Authenticator</description>
+                    <canBeEdited>1</canBeEdited>
+                    <detailedDescription>An authenticator that makes use of the contents of a relational database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
                 </component>
@@ -115,7 +196,19 @@
             <canBeEdited>0</canBeEdited>
             <detailedDescription>This is the main ICAT server for the metadata.</detailedDescription>
             <selected>1</selected>
-            <show>1</show>
+            <show>0</show>
+            <componentSelectionValidationActionList>
+                <throwError>
+                    <text>You must install at least one authenticator.
+                    </text>
+                    <ruleList>
+                        <isFalse value="${component(authn).component(authn_anon).selected}"/>
+                        <isFalse value="${component(authn).component(authn_ldap).selected}"/>
+                        <isFalse value="${component(authn).component(authn_db).selected}"/>
+                        <isFalse value="${component(authn).component(authn_simple).selected}"/>
+                    </ruleList>
+                </throwError>
+            </componentSelectionValidationActionList>
         </component>
         <component>
             <name>ids_server</name>
@@ -132,6 +225,15 @@
             <detailedDescription>This is the server to upload and download data files.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
+            <componentSelectionValidationActionList>
+                <throwError>
+                    <text>topCAT cannot be installed without the IDS.
+                    </text>
+                    <ruleList>
+                        <isFalse value="${component(ids_server).selected}"/>
+                    </ruleList>
+                </throwError>
+            </componentSelectionValidationActionList>
         </component>
         <component>
             <name>ijp_server</name>
@@ -140,6 +242,15 @@
             <detailedDescription>This is the server to permit submission of batch and interactive jobs.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
+            <componentSelectionValidationActionList>
+                <throwError>
+                    <text>IJP cannot be installed without the IDS.
+                    </text>
+                    <ruleList>
+                        <isFalse value="${component(ids_server).selected}"/>
+                    </ruleList>
+                </throwError>
+            </componentSelectionValidationActionList>
         </component>
     </componentList>
     <allowComponentSelection>1</allowComponentSelection>
