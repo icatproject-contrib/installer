@@ -95,6 +95,40 @@
                     </distributionFileList>
                 </folder>
             </folderList>
+            <initializationActionList>
+                <autodetectJava>
+                    <promptUser>0</promptUser>
+                    <validVersionList>
+                        <validVersion>
+                            <bitness></bitness>
+                            <maxVersion>1.8</maxVersion>
+                            <minVersion>1.7</minVersion>
+                            <requireJDK>1</requireJDK>
+                            <vendor></vendor>
+                        </validVersion>
+                    </validVersionList>
+                </autodetectJava>
+            </initializationActionList>
+            <parameterList>
+                <passwordParameter>
+                    <name>glassfish_password</name>
+                    <title>Password for the Glassfish admin account</title>
+                    <description></description>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <descriptionRetype></descriptionRetype>
+                    <width>20</width>
+                    <ruleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${glassfish_installed}</value1>
+                            <value2>0</value2>
+                        </compareValues>
+                    </ruleList>
+                </passwordParameter>
+            </parameterList>
             <postInstallationActionList>
                 <if>
                     <actionList>
@@ -104,7 +138,8 @@
                         </unzip>
                         <runProgram>
                             <program>python</program>
-                            <programArguments>${installdir}/distro/glassfish/setup-glassfish.py ${installdir}/glassfish4 fred</programArguments>
+                            <programArguments>${installdir}/distro/glassfish/setup-glassfish.py ${installdir}/glassfish4 ${glassfish_password}
+                            </programArguments>
                             <progressText>Installing Glassfish</progressText>
                         </runProgram>
                         <copyFile>
@@ -136,7 +171,7 @@
                     </actionList>
                     <conditionRuleList>
                         <fileExists>
-                            <path>${installdir}/glassfish4/glassfish/domains/domain1/config/cert</path>
+                            <path>${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar</path>
                         </fileExists>
                     </conditionRuleList>
                     <elseActionList>
@@ -144,6 +179,36 @@
                             <name>glassfish_installed</name>
                             <value>0</value>
                         </setInstallerVariable>
+                        <getProcessUsingPort>
+                            <port>4848</port>
+                            <variable>glassfish_management</variable>
+                        </getProcessUsingPort>
+                        <throwError>
+                            <text>Port 4848 is in use by ${glassfish_management}</text>
+                            <ruleList>
+                                <compareText>
+                                    <logic>equals</logic>
+                                    <negate>1</negate>
+                                    <text>${glassfish_management}</text>
+                                    <value></value>
+                                </compareText>
+                            </ruleList>
+                        </throwError>
+                        <getProcessUsingPort>
+                            <port>8181</port>
+                            <variable>glassfish_https</variable>
+                        </getProcessUsingPort>
+                        <throwError>
+                            <text>Port 8181 is in use by ${glassfish_https}</text>
+                            <ruleList>
+                                <compareText>
+                                    <logic>equals</logic>
+                                    <negate>1</negate>
+                                    <text>${glassfish_https}</text>
+                                    <value></value>
+                                </compareText>
+                            </ruleList>
+                        </throwError>
                     </elseActionList>
                 </if>
             </preInstallationActionList>
@@ -161,7 +226,7 @@
                     <description>Anonymous Authenticator</description>
                     <canBeEdited>1</canBeEdited>
                     <detailedDescription>The anonymous authenticator accepts anyone.</detailedDescription>
-                    <selected>0</selected>
+                    <selected>1</selected>
                     <show>1</show>
                 </component>
                 <component>
