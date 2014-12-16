@@ -8,73 +8,46 @@
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
     <componentList>
-        <component>
-            <name>default</name>
-            <description>Default Component</description>
-            <canBeEdited>0</canBeEdited>
-            <selected>1</selected>
-            <show>0</show>
-            <folderList>
-                <folder>
-                    <description>Program Files</description>
-                    <destination>${installdir}</destination>
-                    <name>programfiles</name>
-                    <platforms>all</platforms>
-                    <shortcutList>
-                        <shortcut>
-                            <comment>Uninstall</comment>
-                            <exec>${installdir}/${uninstallerName}</exec>
-                            <icon></icon>
-                            <name>Uninstall ${product_fullname}</name>
-                            <path>${installdir}</path>
-                            <platforms>all</platforms>
-                            <runAsAdmin>0</runAsAdmin>
-                            <runInTerminal>0</runInTerminal>
-                            <windowsExec>${installdir}/${uninstallerName}.exe</windowsExec>
-                            <windowsExecArgs></windowsExecArgs>
-                            <windowsIcon></windowsIcon>
-                            <windowsPath>${installdir}</windowsPath>
-                        </shortcut>
-                    </shortcutList>
-                </folder>
-                <folder>
-                    <description>Program Files</description>
-                    <destination>${installdir}</destination>
-                    <name>programfileslinux</name>
-                    <platforms>linux</platforms>
-                </folder>
-                <folder>
-                    <description>Program Files</description>
-                    <destination>${installdir}</destination>
-                    <name>programfileswindows</name>
-                    <platforms>windows</platforms>
-                </folder>
-                <folder>
-                    <description>Program Files</description>
-                    <destination>${installdir}</destination>
-                    <name>programfilesosx</name>
-                    <platforms>osx</platforms>
-                </folder>
-            </folderList>
-            <startMenuShortcutList>
-                <startMenuShortcut>
-                    <comment>Uninstall ${product_fullname}</comment>
-                    <name>Uninstall ${product_fullname}</name>
-                    <runAsAdmin>0</runAsAdmin>
-                    <runInTerminal>0</runInTerminal>
-                    <windowsExec>${installdir}/${uninstallerName}.exe</windowsExec>
-                    <windowsExecArgs></windowsExecArgs>
-                    <windowsIcon></windowsIcon>
-                    <windowsPath>${installdir}/</windowsPath>
-                </startMenuShortcut>
-            </startMenuShortcutList>
-        </component>
+
         <component>
             <name>MySQL</name>
             <description>MySQL Server</description>
             <canBeEdited>0</canBeEdited>
             <selected>1</selected>
             <show>0</show>
+            <readyToInstallActionList>
+                <setInstallerVariableFromScriptOutput>
+                    <exec>${mysql_executable}</exec>
+                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
+                        ='${mysql_username}'"
+                    </execArgs>
+                    <name>result</name>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>${program_stderr}</text>
+                        </throwError>
+                    </onErrorActionList>
+                </setInstallerVariableFromScriptOutput>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by
+                        '${mysql_password}'"
+                    </programArguments>
+                    <ruleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${result}</value1>
+                            <value2>0</value2>
+                        </compareValues>
+                    </ruleList>
+                </runProgram>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' = PASSWORD(
+                        '${mysql_password}')"
+                    </programArguments>
+                </runProgram>
+            </readyToInstallActionList>
         </component>
         <component>
             <name>Glassfish</name>
@@ -137,14 +110,14 @@
                             <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile>
                         </unzip>
                         <runProgram>
-                            <program>python</program>
-                            <programArguments>${installdir}/distro/glassfish/setup-glassfish.py ${installdir}/glassfish4 ${glassfish_password}
-                            </programArguments>
+                            <program>${installdir}/distro/glassfish/setup-glassfish.py</program>
+                            <programArguments>"${installdir}/glassfish4" "${glassfish_password}"</programArguments>
                             <progressText>Installing Glassfish</progressText>
                         </runProgram>
                         <copyFile>
                             <destination>${installdir}/glassfish4/glassfish/domains/domain1/lib/</destination>
                             <origin>${installdir}/distro/glassfish/mysql-connector-java-5.1.30-bin.jar</origin>
+                            <progressText>Installing MySQL Connector</progressText>
                         </copyFile>
                     </actionList>
                     <conditionRuleList>
@@ -159,6 +132,11 @@
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>restart-domain</programArguments>
                     <progressText>Restarting glassfish</progressText>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>asadmin restart-domain failed with: ${program_stdout}</text>
+                        </throwError>
+                    </onErrorActionList>
                 </runProgram>
             </postInstallationActionList>
             <preInstallationActionList>
@@ -252,6 +230,83 @@
                     <detailedDescription>An authenticator that makes use of the contents of a relational database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
+                    <folderList>
+                        <folder>
+                            <description>authn_db</description>
+                            <destination>${installdir}/distro/authn_db</destination>
+                            <name>authn_db</name>
+                            <platforms>all</platforms>
+                            <distributionFileList>
+                                <distributionFile allowWildcards="1">
+                                    <origin>authn_db/*</origin>
+                                </distributionFile>
+                            </distributionFileList>
+                        </folder>
+                    </folderList>
+                    <postInstallationActionList>
+                        <runProgram>
+                            <program>${mysql_executable}</program>
+                            <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on authn_db.* to '${mysql_username}'@'localhost'"
+                            </programArguments>
+                            <progressText>Configuring authn_db database</progressText>
+                        </runProgram>
+                        <runProgram>
+                            <program>${mysql_executable}</program>
+                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"
+                            </programArguments>
+                            <progressText>Configuring authn_db database</progressText>
+                            <onErrorActionList>
+                                <throwError>
+                                    <text>${program_stderr}</text>
+                                </throwError>
+                            </onErrorActionList>
+                        </runProgram>
+                        <unzip>
+                            <destinationDirectory>${installdir}</destinationDirectory>
+                            <zipFile>${installdir}/distro/authn_db/authn_db-1.1.1-distro.zip</zipFile>
+                        </unzip>
+                        <writeFile>
+                            <path>${installdir}/authn_db/authn_db-setup.properties</path>
+                            <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                                authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
+                                glassfish=${installdir}/glassfish4
+                                port=4848
+                            </text>
+                            <ruleList>
+                                <fileExists>
+                                    <negate>1</negate>
+                                    <path>${installdir}/authn_db/authn_db-setup.properties</path>
+                                </fileExists>
+                            </ruleList>
+                        </writeFile>
+                        <touchFile>
+                            <path>${installdir}/authn_db/configured</path>
+                        </touchFile>
+                        <copyFile>
+                            <destination>${installdir}/authn_db/authn_db.properties</destination>
+                            <origin>${installdir}/authn_db/authn_db.properties.example</origin>
+                            <ruleList>
+                                <fileExists>
+                                    <negate>1</negate>
+                                    <path>${installdir}/authn_db/authn_db.properties</path>
+                                </fileExists>
+                            </ruleList>
+                        </copyFile>
+                        <changePermissions>
+                            <files>${installdir}/authn_db/*.properties</files>
+                            <permissions>0600</permissions>
+                        </changePermissions>
+                        <runProgram>
+                            <program>${installdir}/authn_db/setup</program>
+                            <programArguments>-v install</programArguments>
+                            <progressText>Deploying authn_db database</progressText>
+                            <onErrorActionList>
+                                <throwError>
+                                    <text>${program_stdout}${program_stderr}</text>
+                                </throwError>
+                            </onErrorActionList>
+                        </runProgram>
+                    </postInstallationActionList>
                 </component>
             </componentList>
         </componentGroup>
@@ -267,10 +322,10 @@
                     <text>You must install at least one authenticator.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(authn).component(authn_anon).selected}"/>
-                        <isFalse value="${component(authn).component(authn_ldap).selected}"/>
-                        <isFalse value="${component(authn).component(authn_db).selected}"/>
-                        <isFalse value="${component(authn).component(authn_simple).selected}"/>
+                        <isFalse value="${component(authn).component(authn_anon).selected}" />
+                        <isFalse value="${component(authn).component(authn_ldap).selected}" />
+                        <isFalse value="${component(authn).component(authn_db).selected}" />
+                        <isFalse value="${component(authn).component(authn_simple).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -295,7 +350,7 @@
                     <text>topCAT cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}"/>
+                        <isFalse value="${component(ids_server).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -312,17 +367,54 @@
                     <text>IJP cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}"/>
+                        <isFalse value="${component(ids_server).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
         </component>
     </componentList>
+    <initializationActionList>
+        <locate>
+            <command>python</command>
+            <variable>python_executable</variable>
+        </locate>
+        <throwError>
+            <text>No Python installation was found. Please install Python 2.4 to 2.x and try again.</text>
+            <ruleList>
+                <compareText>
+                    <logic>equals</logic>
+                    <text>${python_executable}</text>
+                    <value></value>
+                </compareText>
+            </ruleList>
+        </throwError>
+        <runProgram>
+            <program>${python_executable}</program>
+            <programArguments>-V</programArguments>
+        </runProgram>
+        <throwError>
+            <text>Python version must be between 2.4 and 2.x</text>
+            <ruleList>
+                <regExMatch>
+                    <logic>matches</logic>
+                    <negate>1</negate>
+                    <pattern>^Python 2\.[4-9]\.</pattern>
+                    <text>${program_stderr}</text>
+                </regExMatch>
+            </ruleList>
+        </throwError>
+        <locate>
+            <command>mysql</command>
+            <variable>mysql_executable</variable>
+        </locate>
+    </initializationActionList>
     <allowComponentSelection>1</allowComponentSelection>
     <enableRollback>1</enableRollback>
     <enableTimestamp>1</enableTimestamp>
+    <height>500</height>
     <saveRelativePaths>1</saveRelativePaths>
     <vendor>ICAT Collaboration</vendor>
+    <width>700</width>
     <parameterList>
         <directoryParameter>
             <name>installdir</name>
@@ -337,6 +429,59 @@
             <mustExist>0</mustExist>
             <width>30</width>
         </directoryParameter>
+        <parameterGroup>
+            <name>passwords</name>
+            <title>Passwords</title>
+            <explanation></explanation>
+            <value></value>
+            <default></default>
+            <parameterList>
+                <stringParameter>
+                    <name>glassfish_user</name>
+                    <description>Username</description>
+                    <explanation>Who to run glassfish as. The account will be created if necessary.</explanation>
+                    <value>glassfish</value>
+                    <default>glassfish</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <width>20</width>
+                    <ruleList>
+                        <isTrue>
+                            <value>${installer_is_root_install}</value>
+                        </isTrue>
+                    </ruleList>
+                </stringParameter>
+                <passwordParameter>
+                    <name>mysql_root_password</name>
+                    <description>Password</description>
+                    <explanation>MySQL root password. This password is required to configure the required databases</explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <askForConfirmation>0</askForConfirmation>
+                    <descriptionRetype></descriptionRetype>
+                    <width>20</width>
+                </passwordParameter>
+                <stringParameter>
+                    <name>mysql_username</name>
+                    <description>Username</description>
+                    <explanation>MySQL user who owns the ICAT databases</explanation>
+                    <value>icat</value>
+                    <default>icat</default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <width>20</width>
+                </stringParameter>
+                <passwordParameter>
+                    <name>mysql_password</name>
+                    <description>Password</description>
+                    <explanation>Password of MySQL user who owns the ICAT databases - it will be updated if necessary</explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <descriptionRetype></descriptionRetype>
+                    <width>20</width>
+                </passwordParameter>
+            </parameterList>
+        </parameterGroup>
     </parameterList>
 </project>
 
