@@ -8,7 +8,6 @@
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
     <componentList>
-
         <component>
             <name>MySQL</name>
             <description>MySQL Server</description>
@@ -222,6 +221,170 @@
                     <detailedDescription>An authenticator that makes use of the contents of an LDAP database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
+                    <folderList>
+                        <folder>
+                            <description>authn_ldap</description>
+                            <destination>${installdir}/distro/authn_ldap</destination>
+                            <name>authn_ldap</name>
+                            <platforms>all</platforms>
+                            <distributionFileList>
+                                <distributionFile allowWildcards="1">
+                                    <origin>authn_ldap/*</origin>
+                                </distributionFile>
+                            </distributionFileList>
+                        </folder>
+                    </folderList>
+                    <parameterList>
+                        <parameterGroup>
+                            <name>LDAPConfiguration</name>
+                            <explanation></explanation>
+                            <value></value>
+                            <default></default>
+                            <parameterList>
+                                <stringParameter>
+                                    <name>provider_url</name>
+                                    <description>provider_url</description>
+                                    <explanation>The url of the ldap server</explanation>
+                                    <value>${provide_url}</value>
+                                    <default></default>
+                                    <allowEmptyValue>0</allowEmptyValue>
+                                    <width>30</width>
+                                </stringParameter>
+                                <stringParameter>
+                                    <name>security_principal</name>
+                                    <description>security_principal</description>
+                                    <explanation>The % character in the 
+ security_principal will be replaced by the specified user name.</explanation>
+                                    <value>${security_principal}</value>
+                                    <default></default>
+                                    <allowEmptyValue>0</allowEmptyValue>
+                                    <width>30</width>
+                                </stringParameter>
+                                <choiceParameter>
+                                    <name>case</name>
+                                    <description>case</description>
+                                    <explanation>If not set the case will be left alone</explanation>
+                                    <value>${case}</value>
+                                    <default></default>
+                                    <allowEmptyValue>1</allowEmptyValue>
+                                    <displayType>combobox</displayType>
+                                    <ordering>default</ordering>
+                                    <width>30</width>
+                                    <optionList>
+                                        <option>
+                                            <description>Convert returned name to upper case</description>
+                                            <image></image>
+                                            <text>upper</text>
+                                            <value>upper</value>
+                                        </option>
+                                        <option>
+                                            <description>Convert returned name to lower case</description>
+                                            <image></image>
+                                            <text>lower</text>
+                                            <value>lower</value>
+                                        </option>
+                                        <option>
+                                            <description>Do not modify the case of the returned name</description>
+                                            <image></image>
+                                            <text></text>
+                                            <value></value>
+                                        </option>
+                                    </optionList>
+                                </choiceParameter>
+                            </parameterList>
+                            <preShowPageActionList>
+                                <if>
+                                    <actionList>
+                                        <propertiesFileGet>
+                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                            <key>provider_url</key>
+                                            <variable>provider_url</variable>
+                                        </propertiesFileGet>
+                                        <propertiesFileGet>
+                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                            <key>security_principal</key>
+                                            <variable>security_principal</variable>
+                                        </propertiesFileGet>
+                                        <propertiesFileGet>
+                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                            <key>case</key>
+                                            <variable>case</variable>
+                                        </propertiesFileGet>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <fileExists>
+                                            <path>${installdir}/authn_ldap/authn_ldap.properties</path>
+                                        </fileExists>
+                                    </conditionRuleList>
+                                    <elseActionList>
+                                        <setInstallerVariable name="provider_url" value=""/>
+                                        <setInstallerVariable name="security_principal" value=""/>
+                                        <setInstallerVariable name="case" value="lower"/>
+                                    </elseActionList>
+                                </if>
+                            </preShowPageActionList>
+                        </parameterGroup>
+                    </parameterList>
+                    <postInstallationActionList>
+                        <unzip>
+                            <destinationDirectory>${installdir}</destinationDirectory>
+                            <zipFile>${installdir}/distro/authn_ldap/authn_ldap-1.1.0-distro.zip</zipFile>
+                        </unzip>
+                        <writeFile>
+                            <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
+                            <text>glassfish=${installdir}/glassfish4
+                                port=4848
+                            </text>
+                            <ruleList>
+                                <fileExists>
+                                    <negate>1</negate>
+                                    <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
+                                </fileExists>
+                            </ruleList>
+                        </writeFile>
+                        <touchFile>
+                            <path>${installdir}/authn_ldap/configured</path>
+                        </touchFile>
+                        <copyFile>
+                            <destination>${installdir}/authn_ldap/authn_ldap.properties</destination>
+                            <origin>${installdir}/authn_ldap/authn_ldap.properties.example</origin>
+                            <ruleList>
+                                <fileExists>
+                                    <negate>1</negate>
+                                    <path>${installdir}/authn_ldap/authn_ldap.properties</path>
+                                </fileExists>
+                            </ruleList>
+                        </copyFile>
+                        <propertiesFileSet>
+                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <key>case</key>
+                            <value>${case}</value>
+                        </propertiesFileSet>
+                        <propertiesFileSet>
+                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <key>provider_url</key>
+                            <value>${provider_url}</value>
+                        </propertiesFileSet>
+                        <propertiesFileSet>
+                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <key>security_principal</key>
+                            <value>${security_principal}</value>
+                        </propertiesFileSet>
+                        <changePermissions>
+                            <files>${installdir}/authn_ldap/*.properties</files>
+                            <permissions>0600</permissions>
+                        </changePermissions>
+                        <runProgram>
+                            <program>${installdir}/authn_ldap/setup</program>
+                            <programArguments>-v install</programArguments>
+                            <progressText>Deploying LDAP Authenticator</progressText>
+                            <onErrorActionList>
+                                <throwError>
+                                    <text>${program_stdout}${program_stderr}</text>
+                                </throwError>
+                            </onErrorActionList>
+                        </runProgram>
+                    </postInstallationActionList>
                 </component>
                 <component>
                     <name>authn_db</name>
@@ -299,7 +462,7 @@
                         <runProgram>
                             <program>${installdir}/authn_db/setup</program>
                             <programArguments>-v install</programArguments>
-                            <progressText>Deploying authn_db database</progressText>
+                            <progressText>Deploying Database Authenticator</progressText>
                             <onErrorActionList>
                                 <throwError>
                                     <text>${program_stdout}${program_stderr}</text>
@@ -322,10 +485,10 @@
                     <text>You must install at least one authenticator.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(authn).component(authn_anon).selected}" />
-                        <isFalse value="${component(authn).component(authn_ldap).selected}" />
-                        <isFalse value="${component(authn).component(authn_db).selected}" />
-                        <isFalse value="${component(authn).component(authn_simple).selected}" />
+                        <isFalse value="${component(authn).component(authn_anon).selected}"/>
+                        <isFalse value="${component(authn).component(authn_ldap).selected}"/>
+                        <isFalse value="${component(authn).component(authn_db).selected}"/>
+                        <isFalse value="${component(authn).component(authn_simple).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -350,7 +513,7 @@
                     <text>topCAT cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}" />
+                        <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -367,7 +530,7 @@
                     <text>IJP cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}" />
+                        <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -448,6 +611,9 @@
                         <isTrue>
                             <value>${installer_is_root_install}</value>
                         </isTrue>
+                        <isFalse>
+                            <value>${glassfish_installed}</value>
+                        </isFalse>
                     </ruleList>
                 </stringParameter>
                 <passwordParameter>

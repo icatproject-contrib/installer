@@ -9,14 +9,14 @@ import sys
 import os
 import tempfile
 
-def execute(cmd):
+def execute(prog, argString):
         
-    print cmd
-    if platform.system() == "Windows": 
-        cmd = cmd.split()
+    print '"'+prog+'"', argString 
+    if platform.system() == "Windows":
+        cmd = [prog] + argString.split()
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     else:
-        cmd = shlex.split(cmd)
+        cmd = [prog] + shlex.split(argString)
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stringOut = StringIO.StringIO()
 
@@ -57,14 +57,14 @@ def abort(msg):
     print >> sys.stderr, msg, "\n"
     sys.exit(1)
 
-def executeGood(cmd):
-    out, err, rc = execute(cmd)
+def executeGood(prog, argString):
+    out, err, rc = execute(prog, argString)
     if rc:
         abort(err)
     return out
 
-def asadmin(cmd):
-    return executeGood(asadminCmd + " " + cmd)
+def asadmin(argString):
+    return executeGood(asadminCmd, argString)
 
 glassfish, password = sys.argv[1:]
 
@@ -77,19 +77,19 @@ a.close()
 
 config = os.path.join(glassfish, "glassfish", "domains", "domain1", "config")
 
-asadmin("delete-domain domain1")
-asadmin("-W " + tfile + " --user admin create-domain --savelogin domain1")
-asadmin("start-domain")
-asadmin("enable-secure-admin")
-asadmin("stop-domain")
-asadmin("start-domain")
-asadmin('set server.http-service.access-log.format="common"')
-asadmin('set server.http-service.access-logging-enabled=true')
-asadmin('set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128')
-asadmin('set configs.config.server-config.cdi-service.enable-implicit-cdi=false')
-asadmin('set server.ejb-container.property.disable-nonportable-jndi-names="true"')
-asadmin('delete-ssl --type http-listener http-listener-2')
-asadmin('delete-network-listener http-listener-2')
-asadmin('create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2')
-asadmin('create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2')
-executeGood("keytool -export -keystore " + os.path.join(config, "keystore.jks") + " -file " + os.path.join(config, "cert") + " -storepass changeit -alias s1as")
+print asadmin("delete-domain domain1")
+print asadmin("-W " + tfile + " --user admin create-domain --savelogin domain1")
+print asadmin("start-domain")
+print asadmin("enable-secure-admin")
+print asadmin("stop-domain")
+print asadmin("start-domain")
+print asadmin('set server.http-service.access-log.format="common"')
+print asadmin('set server.http-service.access-logging-enabled=true')
+print asadmin('set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128')
+print asadmin('set configs.config.server-config.cdi-service.enable-implicit-cdi=false')
+print asadmin('set server.ejb-container.property.disable-nonportable-jndi-names="true"')
+print asadmin('delete-ssl --type http-listener http-listener-2')
+print asadmin('delete-network-listener http-listener-2')
+print asadmin('create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2')
+print asadmin('create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2')
+##executeGood("keytool", "-export -keystore " + os.path.join(config, "keystore.jks") + " -file " + os.path.join(config, "cert") + " -storepass changeit -alias s1as")
