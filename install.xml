@@ -138,6 +138,9 @@
                     </onErrorActionList>
                 </runProgram>
             </postInstallationActionList>
+            <postUninstallationActionList>
+                <deleteFile path="${installdir}/glassfish4/" />
+            </postUninstallationActionList>
             <preInstallationActionList>
                 <if>
                     <actionList>
@@ -189,6 +192,18 @@
                     </elseActionList>
                 </if>
             </preInstallationActionList>
+            <preUninstallationActionList>
+                <runProgram>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>stop-domain</programArguments>
+                    <progressText>Stopping glassfish</progressText>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>asadmin stop-domain failed with: ${program_stdout} ${program_stderr}</text>
+                        </throwError>
+                    </onErrorActionList>
+                </runProgram>
+            </preUninstallationActionList>
         </component>
         <componentGroup>
             <name>authn</name>
@@ -205,6 +220,50 @@
                     <detailedDescription>The anonymous authenticator accepts anyone.</detailedDescription>
                     <selected>1</selected>
                     <show>1</show>
+                    <postInstallationActionList>
+                        <if>
+                            <actionList>
+                                <generateRandomValue>
+                                    <length>5</length>
+                                    <variable>tname</variable>
+                                </generateRandomValue>
+                                <httpGet filename="${system_temp_directory}/${tname}"
+                                    url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_anon/${authn_anon_version}/authn_anon-${authn_anon_version}-distro.zip" />
+                                <unzip>
+                                    <destinationDirectory>${installdir}</destinationDirectory>
+                                    <zipFile>${system_temp_directory}/${tname}</zipFile>
+                                </unzip>
+                                <writeFile>
+                                    <path>${installdir}/authn_anon/authn_anon-setup.properties</path>
+                                    <text>glassfish=${installdir}/glassfish4
+                                        port=4848
+                                    </text>
+                                </writeFile>
+                                <copyFile>
+                                    <destination>${installdir}/authn_anon/authn_anon.properties</destination>
+                                    <origin>${installdir}/authn_anon/authn_anon.properties.example</origin>
+                                </copyFile>
+                            </actionList>
+                            <conditionRuleList>
+                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties" />
+                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties.example" />
+                            </conditionRuleList>
+                        </if>
+                        <changePermissions>
+                            <files>${installdir}/authn_anon/*.properties</files>
+                            <permissions>0600</permissions>
+                        </changePermissions>
+                        <runProgram>
+                            <program>${installdir}/authn_anon/setup</program>
+                            <programArguments>-v install</programArguments>
+                            <progressText>Deploying ANON Authenticator</progressText>
+                            <onErrorActionList>
+                                <throwError>
+                                    <text>${program_stdout}${program_stderr}</text>
+                                </throwError>
+                            </onErrorActionList>
+                        </runProgram>
+                    </postInstallationActionList>
                 </component>
                 <component>
                     <name>authn_simple</name>
@@ -213,6 +272,50 @@
                     <detailedDescription>Users and passwords are listed in a file</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
+                    <postInstallationActionList>
+                        <if>
+                            <actionList>
+                                <generateRandomValue>
+                                    <length>5</length>
+                                    <variable>tname</variable>
+                                </generateRandomValue>
+                                <httpGet filename="${system_temp_directory}/${tname}"
+                                    url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_simple/${authn_simple_version}/authn_simple-${authn_simple_version}-distro.zip" />
+                                <unzip>
+                                    <destinationDirectory>${installdir}</destinationDirectory>
+                                    <zipFile>${system_temp_directory}/${tname}</zipFile>
+                                </unzip>
+                                <writeFile>
+                                    <path>${installdir}/authn_simple/authn_simple-setup.properties</path>
+                                    <text>glassfish=${installdir}/glassfish4
+                                        port=4848
+                                    </text>
+                                </writeFile>
+                                <copyFile>
+                                    <destination>${installdir}/authn_simple/authn_simple.properties</destination>
+                                    <origin>${installdir}/authn_simple/authn_simple.properties.example</origin>
+                                </copyFile>
+                            </actionList>
+                            <conditionRuleList>
+                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties" />
+                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties.example" />
+                            </conditionRuleList>
+                        </if>
+                        <changePermissions>
+                            <files>${installdir}/authn_simple/*.properties</files>
+                            <permissions>0600</permissions>
+                        </changePermissions>
+                        <runProgram>
+                            <program>${installdir}/authn_simple/setup</program>
+                            <programArguments>-v install</programArguments>
+                            <progressText>Deploying ANON Authenticator</progressText>
+                            <onErrorActionList>
+                                <throwError>
+                                    <text>${program_stdout}${program_stderr}</text>
+                                </throwError>
+                            </onErrorActionList>
+                        </runProgram>
+                    </postInstallationActionList>
                 </component>
                 <component>
                     <name>authn_ldap</name>
@@ -237,7 +340,8 @@
                     <parameterList>
                         <parameterGroup>
                             <name>LDAPConfiguration</name>
-                            <explanation></explanation>
+                            <title>LDAP Configuration</title>
+                            <explanation>LDAP Configuration</explanation>
                             <value></value>
                             <default></default>
                             <parameterList>
@@ -253,8 +357,9 @@
                                 <stringParameter>
                                     <name>security_principal</name>
                                     <description>security_principal</description>
-                                    <explanation>The % character in the 
- security_principal will be replaced by the specified user name.</explanation>
+                                    <explanation>The % character in the
+                                        security_principal will be replaced by the specified user name.
+                                    </explanation>
                                     <value>${security_principal}</value>
                                     <default></default>
                                     <allowEmptyValue>0</allowEmptyValue>
@@ -295,21 +400,17 @@
                             <preShowPageActionList>
                                 <if>
                                     <actionList>
-                                        <propertiesFileGet>
-                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
-                                            <key>provider_url</key>
-                                            <variable>provider_url</variable>
-                                        </propertiesFileGet>
-                                        <propertiesFileGet>
-                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
-                                            <key>security_principal</key>
-                                            <variable>security_principal</variable>
-                                        </propertiesFileGet>
-                                        <propertiesFileGet>
-                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
-                                            <key>case</key>
-                                            <variable>case</variable>
-                                        </propertiesFileGet>
+                                        <foreach>
+                                            <values>provider_url security_principal case</values>
+                                            <variables>prop</variables>
+                                            <actionList>
+                                                <propertiesFileGet>
+                                                    <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                                    <key>${prop}</key>
+                                                    <variable>${prop}</variable>
+                                                </propertiesFileGet>
+                                            </actionList>
+                                        </foreach>
                                     </actionList>
                                     <conditionRuleList>
                                         <fileExists>
@@ -317,9 +418,9 @@
                                         </fileExists>
                                     </conditionRuleList>
                                     <elseActionList>
-                                        <setInstallerVariable name="provider_url" value=""/>
-                                        <setInstallerVariable name="security_principal" value=""/>
-                                        <setInstallerVariable name="case" value="lower"/>
+                                        <setInstallerVariable name="provider_url" value="" />
+                                        <setInstallerVariable name="security_principal" value="" />
+                                        <setInstallerVariable name="case" value="lower" />
                                     </elseActionList>
                                 </if>
                             </preShowPageActionList>
@@ -328,7 +429,10 @@
                     <postInstallationActionList>
                         <unzip>
                             <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/authn_ldap/authn_ldap-1.1.0-distro.zip</zipFile>
+                            <zipFile>${installdir}/distro/authn_ldap/authn_ldap-${authn_ldap_version}-distro.zip</zipFile>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties" />
+                            </ruleList>
                         </unzip>
                         <writeFile>
                             <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
@@ -426,7 +530,7 @@
                         </runProgram>
                         <unzip>
                             <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/authn_db/authn_db-1.1.1-distro.zip</zipFile>
+                            <zipFile>${installdir}/distro/authn_db/authn_db-${authn_db_version}-distro.zip</zipFile>
                         </unzip>
                         <writeFile>
                             <path>${installdir}/authn_db/authn_db-setup.properties</path>
@@ -435,12 +539,6 @@
                                 glassfish=${installdir}/glassfish4
                                 port=4848
                             </text>
-                            <ruleList>
-                                <fileExists>
-                                    <negate>1</negate>
-                                    <path>${installdir}/authn_db/authn_db-setup.properties</path>
-                                </fileExists>
-                            </ruleList>
                         </writeFile>
                         <touchFile>
                             <path>${installdir}/authn_db/configured</path>
@@ -485,13 +583,178 @@
                     <text>You must install at least one authenticator.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(authn).component(authn_anon).selected}"/>
-                        <isFalse value="${component(authn).component(authn_ldap).selected}"/>
-                        <isFalse value="${component(authn).component(authn_db).selected}"/>
-                        <isFalse value="${component(authn).component(authn_simple).selected}"/>
+                        <isFalse value="${component(authn).component(authn_anon).selected}" />
+                        <isFalse value="${component(authn).component(authn_ldap).selected}" />
+                        <isFalse value="${component(authn).component(authn_db).selected}" />
+                        <isFalse value="${component(authn).component(authn_simple).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
+            <folderList>
+                <folder>
+                    <description>ICAT Server</description>
+                    <destination>${installdir}/distro/icat.server</destination>
+                    <name>icat_server</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile>
+                            <allowWildcards>1</allowWildcards>
+                            <origin>icat.server/*</origin>
+                        </distributionFile>
+                    </distributionFileList>
+                </folder>
+            </folderList>
+            <parameterList>
+                <parameterGroup>
+                    <name>ICATConfiguration</name>
+                    <title>ICAT Server Configuration Parameters</title>
+                    <explanation>ICAT Server Configuration Parameters</explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter>
+                            <name>rootUserNames</name>
+                            <description>rootUserNames</description>
+                            <explanation>Users with "root" access to the ICAT server</explanation>
+                            <value>${rootUserNames}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                        <stringParameter>
+                            <name>maxEntities</name>
+                            <description>maxEntities</description>
+                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.
+                            </explanation>
+                            <value>${maxEntities}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                    </parameterList>
+                    <preShowPageActionList>
+                        <if>
+                            <actionList>
+                                <foreach>
+                                    <values>rootUserNames maxEntities</values>
+                                    <variables>prop</variables>
+                                    <actionList>
+                                        <propertiesFileGet>
+                                            <file>${installdir}/icat.server/icat.properties</file>
+                                            <key>${prop}</key>
+                                            <variable>${prop}</variable>
+                                        </propertiesFileGet>
+                                    </actionList>
+                                </foreach>
+                            </actionList>
+                            <conditionRuleList>
+                                <fileExists>
+                                    <path>${installdir}/icat.server/icat.properties</path>
+                                </fileExists>
+                            </conditionRuleList>
+                            <elseActionList>
+                                <setInstallerVariable name="rootUserNames" value="" />
+                                <setInstallerVariable name="maxEntities" value="" />
+                            </elseActionList>
+                        </if>
+                    </preShowPageActionList>
+                </parameterGroup>
+            </parameterList>
+            <postInstallationActionList>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on icat.* to '${mysql_username}'@'localhost'"
+                    </programArguments>
+                    <progressText>Configuring icat database</progressText>
+                </runProgram>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists icat"
+                    </programArguments>
+                    <progressText>Configuring icat database</progressText>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>${program_stderr}</text>
+                        </throwError>
+                    </onErrorActionList>
+                </runProgram>
+                <unzip>
+                    <destinationDirectory>${installdir}</destinationDirectory>
+                    <zipFile>${installdir}/distro/icat.server/icat.server-${icat_server_version}-distro.zip</zipFile>
+                    <ruleList>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties" />
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties.example" />
+                    </ruleList>
+                </unzip>
+                <writeFile>
+                    <path>${installdir}/icat.server/icat-setup.properties</path>
+                    <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=icat
+                        glassfish=${installdir}/glassfish4
+                        port=4848
+                    </text>
+                </writeFile>
+                <copyFile>
+                    <destination>${installdir}/icat.server/icat.properties</destination>
+                    <origin>${installdir}/icat.server/icat.properties.example</origin>
+                    <ruleList>
+                        <fileExists>
+                            <negate>1</negate>
+                            <path>${installdir}/icat.server/icat.server.properties</path>
+                        </fileExists>
+                    </ruleList>
+                </copyFile>
+                <propertiesFileSet>
+                    <file>${installdir}/icat.server/icat.properties</file>
+                    <key>rootUserNames</key>
+                    <value>${rootUserNames}</value>
+                </propertiesFileSet>
+                <propertiesFileSet>
+                    <file>${installdir}/icat.server/icat.properties</file>
+                    <key>maxEntities</key>
+                    <value>${maxEntities}</value>
+                </propertiesFileSet>
+                <setInstallerVariable name="authn_list" value="" />
+                <foreach>
+                    <values>db ldap anon simple</values>
+                    <variables>authn</variables>
+                    <actionList>
+                        <continue>
+                            <ruleList>
+                                <isFalse>
+                                    <value>${component(authn).component(authn_${authn}).selected}</value>
+                                </isFalse>
+                            </ruleList>
+                        </continue>
+                        <setInstallerVariable name="authn_list" value="${authn_list} ${authn}" />
+                        <stringModify logic="toupper" text="${authn}" variable="authn_upper" />
+                        <propertiesFileSet>
+                            <file>${installdir}/icat.server/icat.properties</file>
+                            <key>authn.${authn}.jndi</key>
+                            <value>java:global/authn_${authn}-${authn_${authn}_version}/${authn_upper}_Authenticator</value>
+                        </propertiesFileSet>
+                    </actionList>
+                </foreach>
+                <propertiesFileSet>
+                    <file>${installdir}/icat.server/icat.properties</file>
+                    <key>authn.list</key>
+                    <value>${authn_list}</value>
+                </propertiesFileSet>
+                <changePermissions>
+                    <files>${installdir}/icat.properties/*.properties</files>
+                    <permissions>0600</permissions>
+                </changePermissions>
+                <runProgram>
+                    <program>${installdir}/icat.server/setup</program>
+                    <programArguments>-v install</programArguments>
+                    <progressText>Deploying ICAT Server</progressText>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>${program_stdout}${program_stderr}</text>
+                        </throwError>
+                    </onErrorActionList>
+                </runProgram>
+            </postInstallationActionList>
         </component>
         <component>
             <name>ids_server</name>
@@ -513,7 +776,7 @@
                     <text>topCAT cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}"/>
+                        <isFalse value="${component(ids_server).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -530,13 +793,18 @@
                     <text>IJP cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}"/>
+                        <isFalse value="${component(ids_server).selected}" />
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
         </component>
     </componentList>
     <initializationActionList>
+        <setInstallerVariable name="authn_db_version" value="1.1.1" />
+        <setInstallerVariable name="authn_ldap_version" value="1.1.0" />
+        <setInstallerVariable name="authn_simple_version" value="1.0.1" />
+        <setInstallerVariable name="authn_anon_version" value="1.0.2" />
+        <setInstallerVariable name="icat_server_version" value="4.4.0" />
         <locate>
             <command>python</command>
             <variable>python_executable</variable>
@@ -571,8 +839,18 @@
             <variable>mysql_executable</variable>
         </locate>
     </initializationActionList>
+    <postInstallationActionList>
+        <addDirectoriesToUninstaller files="${installdir}/distro/" />
+    </postInstallationActionList>
+    <postUninstallationActionList>
+        <foreach variables="comp" values="authn_anon authn_ldap authn_db authn_simple icat.server">
+            <actionList>
+                <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*" />
+            </actionList>
+        </foreach>
+    </postUninstallationActionList>
     <allowComponentSelection>1</allowComponentSelection>
-    <enableRollback>1</enableRollback>
+    <enableRollback>0</enableRollback>
     <enableTimestamp>1</enableTimestamp>
     <height>500</height>
     <saveRelativePaths>1</saveRelativePaths>
