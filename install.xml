@@ -139,7 +139,7 @@
                 </runProgram>
             </postInstallationActionList>
             <postUninstallationActionList>
-                <deleteFile path="${installdir}/glassfish4/" />
+                <deleteFile path="${installdir}/glassfish4/"/>
             </postUninstallationActionList>
             <preInstallationActionList>
                 <if>
@@ -222,13 +222,13 @@
                     <show>1</show>
                     <postInstallationActionList>
                         <if>
+                            <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
                             <actionList>
                                 <generateRandomValue>
                                     <length>5</length>
                                     <variable>tname</variable>
                                 </generateRandomValue>
-                                <httpGet filename="${system_temp_directory}/${tname}"
-                                    url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_anon/${authn_anon_version}/authn_anon-${authn_anon_version}-distro.zip" />
+                                <httpGet filename="${system_temp_directory}/${tname}" url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_anon/${authn_anon_version}/authn_anon-${authn_anon_version}-distro.zip"/>
                                 <unzip>
                                     <destinationDirectory>${installdir}</destinationDirectory>
                                     <zipFile>${system_temp_directory}/${tname}</zipFile>
@@ -242,11 +242,14 @@
                                 <copyFile>
                                     <destination>${installdir}/authn_anon/authn_anon.properties</destination>
                                     <origin>${installdir}/authn_anon/authn_anon.properties.example</origin>
+                                    <ruleList>
+                                        <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties"/>
+                                    </ruleList>
                                 </copyFile>
                             </actionList>
                             <conditionRuleList>
-                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties" />
-                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties.example" />
+                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties"/>
+                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties.example"/>
                             </conditionRuleList>
                         </if>
                         <changePermissions>
@@ -272,15 +275,150 @@
                     <detailedDescription>Users and passwords are listed in a file</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
+                    <parameterList>
+                        <parameterGroup>
+                            <name>SIMPLEConfiguration</name>
+                            <title>Simple Authenticator Users</title>
+                            <explanation>Simple Authenticator Configuration</explanation>
+                            <value></value>
+                            <default></default>
+                            <parameterList>
+                                <parameterGroup>
+                                    <name>SIMPLEConfigurationUser0</name>
+                                    <explanation>User 0</explanation>
+                                    <value></value>
+                                    <default></default>
+                                    <parameterList>
+                                        <stringParameter>
+                                            <name>user0</name>
+                                            <description>Name</description>
+                                            <explanation></explanation>
+                                            <value>${user0}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>30</width>
+                                        </stringParameter>
+                                        <stringParameter>
+                                            <name>password0</name>
+                                            <description>Password</description>
+                                            <explanation></explanation>
+                                            <value>${password0}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>20</width>
+                                        </stringParameter>
+                                    </parameterList>
+                                </parameterGroup>
+                                <parameterGroup>
+                                    <name>SIMPLEConfigurationUser1</name>
+                                    <explanation>User 1</explanation>
+                                    <value></value>
+                                    <default></default>
+                                    <parameterList>
+                                        <stringParameter>
+                                            <name>user1</name>
+                                            <description>Name</description>
+                                            <explanation></explanation>
+                                            <value>${user1}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>30</width>
+                                        </stringParameter>
+                                        <stringParameter>
+                                            <name>password1</name>
+                                            <description>Password</description>
+                                            <explanation></explanation>
+                                            <value>${password1}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>20</width>
+                                        </stringParameter>
+                                    </parameterList>
+                                </parameterGroup>
+                                <parameterGroup>
+                                    <name>SIMPLEConfigurationUser2</name>
+                                    <explanation>User 2</explanation>
+                                    <value></value>
+                                    <default></default>
+                                    <parameterList>
+                                        <stringParameter>
+                                            <name>user2</name>
+                                            <description>Name</description>
+                                            <explanation></explanation>
+                                            <value>${user2}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>30</width>
+                                        </stringParameter>
+                                        <stringParameter>
+                                            <name>password2</name>
+                                            <description>Password</description>
+                                            <explanation></explanation>
+                                            <value>${password2}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>20</width>
+                                        </stringParameter>
+                                    </parameterList>
+                                </parameterGroup>
+                            </parameterList>
+                            <preShowPageActionList>
+                                <setInstallerVariable name="n" value="0"/>
+                                <while>
+                                    <actionList>
+                                        <setInstallerVariable name="user${n}" value=""/>
+                                        <setInstallerVariable name="password${n}" value=""/>
+                                        <mathExpression text="${n} + 1" variable="n"/>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <compareValues>
+                                            <logic>less</logic>
+                                            <value1>${n}</value1>
+                                            <value2>5</value2>
+                                        </compareValues>
+                                    </conditionRuleList>
+                                </while>
+                                <if>
+                                    <actionList>
+                                        <propertiesFileGet>
+                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                            <key>user.list</key>
+                                            <variable>user_list</variable>
+                                        </propertiesFileGet>
+                                        <setInstallerVariable name="n" value="0"/>
+                                        <foreach>
+                                            <values>${user_list}</values>
+                                            <variables>name</variables>
+                                            <actionList>
+                                                <setInstallerVariable name="user${n}" value="${name}"/>
+                                                <propertiesFileGet>
+                                                    <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                                    <key>user.${name}.password</key>
+                                                    <variable>upw</variable>
+                                                </propertiesFileGet>
+                                                <setInstallerVariable name="password${n}" value="${upw}"/>
+                                                <mathExpression text="${n} + 1" variable="n"/>
+                                            </actionList>
+                                        </foreach>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <fileExists>
+                                            <path>${installdir}/authn_simple/authn_simple.properties</path>
+                                        </fileExists>
+                                    </conditionRuleList>
+                                </if>
+                            </preShowPageActionList>
+                        </parameterGroup>
+                    </parameterList>
                     <postInstallationActionList>
                         <if>
+                            <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
                             <actionList>
                                 <generateRandomValue>
                                     <length>5</length>
                                     <variable>tname</variable>
                                 </generateRandomValue>
-                                <httpGet filename="${system_temp_directory}/${tname}"
-                                    url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_simple/${authn_simple_version}/authn_simple-${authn_simple_version}-distro.zip" />
+                                <httpGet filename="${system_temp_directory}/${tname}" url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_simple/${authn_simple_version}/authn_simple-${authn_simple_version}-distro.zip"/>
                                 <unzip>
                                     <destinationDirectory>${installdir}</destinationDirectory>
                                     <zipFile>${system_temp_directory}/${tname}</zipFile>
@@ -294,11 +432,14 @@
                                 <copyFile>
                                     <destination>${installdir}/authn_simple/authn_simple.properties</destination>
                                     <origin>${installdir}/authn_simple/authn_simple.properties.example</origin>
+                                    <ruleList>
+                                        <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
+                                    </ruleList>
                                 </copyFile>
                             </actionList>
                             <conditionRuleList>
-                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties" />
-                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties.example" />
+                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
+                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties.example"/>
                             </conditionRuleList>
                         </if>
                         <changePermissions>
@@ -308,7 +449,7 @@
                         <runProgram>
                             <program>${installdir}/authn_simple/setup</program>
                             <programArguments>-v install</programArguments>
-                            <progressText>Deploying ANON Authenticator</progressText>
+                            <progressText>Deploying Simple Authenticator</progressText>
                             <onErrorActionList>
                                 <throwError>
                                     <text>${program_stdout}${program_stderr}</text>
@@ -418,9 +559,9 @@
                                         </fileExists>
                                     </conditionRuleList>
                                     <elseActionList>
-                                        <setInstallerVariable name="provider_url" value="" />
-                                        <setInstallerVariable name="security_principal" value="" />
-                                        <setInstallerVariable name="case" value="lower" />
+                                        <setInstallerVariable name="provider_url" value=""/>
+                                        <setInstallerVariable name="security_principal" value=""/>
+                                        <setInstallerVariable name="case" value="lower"/>
                                     </elseActionList>
                                 </if>
                             </preShowPageActionList>
@@ -431,7 +572,7 @@
                             <destinationDirectory>${installdir}</destinationDirectory>
                             <zipFile>${installdir}/distro/authn_ldap/authn_ldap-${authn_ldap_version}-distro.zip</zipFile>
                             <ruleList>
-                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties" />
+                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties"/>
                             </ruleList>
                         </unzip>
                         <writeFile>
@@ -583,10 +724,10 @@
                     <text>You must install at least one authenticator.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(authn).component(authn_anon).selected}" />
-                        <isFalse value="${component(authn).component(authn_ldap).selected}" />
-                        <isFalse value="${component(authn).component(authn_db).selected}" />
-                        <isFalse value="${component(authn).component(authn_simple).selected}" />
+                        <isFalse value="${component(authn).component(authn_anon).selected}"/>
+                        <isFalse value="${component(authn).component(authn_ldap).selected}"/>
+                        <isFalse value="${component(authn).component(authn_db).selected}"/>
+                        <isFalse value="${component(authn).component(authn_simple).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -653,8 +794,8 @@
                                 </fileExists>
                             </conditionRuleList>
                             <elseActionList>
-                                <setInstallerVariable name="rootUserNames" value="" />
-                                <setInstallerVariable name="maxEntities" value="" />
+                                <setInstallerVariable name="rootUserNames" value=""/>
+                                <setInstallerVariable name="maxEntities" value=""/>
                             </elseActionList>
                         </if>
                     </preShowPageActionList>
@@ -682,8 +823,8 @@
                     <destinationDirectory>${installdir}</destinationDirectory>
                     <zipFile>${installdir}/distro/icat.server/icat.server-${icat_server_version}-distro.zip</zipFile>
                     <ruleList>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties" />
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties.example" />
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties.example"/>
                     </ruleList>
                 </unzip>
                 <writeFile>
@@ -698,10 +839,7 @@
                     <destination>${installdir}/icat.server/icat.properties</destination>
                     <origin>${installdir}/icat.server/icat.properties.example</origin>
                     <ruleList>
-                        <fileExists>
-                            <negate>1</negate>
-                            <path>${installdir}/icat.server/icat.server.properties</path>
-                        </fileExists>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
                     </ruleList>
                 </copyFile>
                 <propertiesFileSet>
@@ -714,7 +852,7 @@
                     <key>maxEntities</key>
                     <value>${maxEntities}</value>
                 </propertiesFileSet>
-                <setInstallerVariable name="authn_list" value="" />
+                <setInstallerVariable name="authn_list" value=""/>
                 <foreach>
                     <values>db ldap anon simple</values>
                     <variables>authn</variables>
@@ -726,8 +864,8 @@
                                 </isFalse>
                             </ruleList>
                         </continue>
-                        <setInstallerVariable name="authn_list" value="${authn_list} ${authn}" />
-                        <stringModify logic="toupper" text="${authn}" variable="authn_upper" />
+                        <setInstallerVariable name="authn_list" value="${authn_list} ${authn}"/>
+                        <stringModify logic="toupper" text="${authn}" variable="authn_upper"/>
                         <propertiesFileSet>
                             <file>${installdir}/icat.server/icat.properties</file>
                             <key>authn.${authn}.jndi</key>
@@ -754,6 +892,18 @@
                         </throwError>
                     </onErrorActionList>
                 </runProgram>
+
+                <!-- This restart should not be necessary -->
+                <runProgram>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>disable icat.server-${icat_server_version}</programArguments>
+                    <progressText>Disable icat.server</progressText>
+                </runProgram>
+                <runProgram>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>enable icat.server-${icat_server_version}</programArguments>
+                    <progressText>Enable icat.server</progressText>
+                </runProgram>
             </postInstallationActionList>
         </component>
         <component>
@@ -776,7 +926,7 @@
                     <text>topCAT cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}" />
+                        <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
@@ -793,18 +943,18 @@
                     <text>IJP cannot be installed without the IDS.
                     </text>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}" />
+                        <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
         </component>
     </componentList>
     <initializationActionList>
-        <setInstallerVariable name="authn_db_version" value="1.1.1" />
-        <setInstallerVariable name="authn_ldap_version" value="1.1.0" />
-        <setInstallerVariable name="authn_simple_version" value="1.0.1" />
-        <setInstallerVariable name="authn_anon_version" value="1.0.2" />
-        <setInstallerVariable name="icat_server_version" value="4.4.0" />
+        <setInstallerVariable name="authn_db_version" value="1.1.1"/>
+        <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
+        <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
+        <setInstallerVariable name="authn_anon_version" value="1.0.2"/>
+        <setInstallerVariable name="icat_server_version" value="4.4.0"/>
         <locate>
             <command>python</command>
             <variable>python_executable</variable>
@@ -840,22 +990,24 @@
         </locate>
     </initializationActionList>
     <postInstallationActionList>
-        <addDirectoriesToUninstaller files="${installdir}/distro/" />
+        <addDirectoriesToUninstaller files="${installdir}/distro/"/>
     </postInstallationActionList>
     <postUninstallationActionList>
-        <foreach variables="comp" values="authn_anon authn_ldap authn_db authn_simple icat.server">
+        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server" variables="comp">
             <actionList>
-                <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*" />
+                <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*"/>
             </actionList>
         </foreach>
     </postUninstallationActionList>
     <allowComponentSelection>1</allowComponentSelection>
     <enableRollback>0</enableRollback>
     <enableTimestamp>1</enableTimestamp>
-    <height>500</height>
+    <height>800</height>
+    <installationLogFile>${system_temp_directory}/${project.shortName}-installation.log</installationLogFile>
     <saveRelativePaths>1</saveRelativePaths>
+    <uninstallationLogFile>${system_temp_directory}/${project.shortName}-uninstallation.log</uninstallationLogFile>
     <vendor>ICAT Collaboration</vendor>
-    <width>700</width>
+    <width>1000</width>
     <parameterList>
         <directoryParameter>
             <name>installdir</name>
