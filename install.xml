@@ -17,9 +17,7 @@
             <readyToInstallActionList>
                 <setInstallerVariableFromScriptOutput>
                     <exec>${mysql_executable}</exec>
-                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
-                        ='${mysql_username}'"
-                    </execArgs>
+                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user ='${mysql_username}'"</execArgs>
                     <name>result</name>
                     <onErrorActionList>
                         <throwError>
@@ -29,9 +27,7 @@
                 </setInstallerVariableFromScriptOutput>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by
-                        '${mysql_password}'"
-                    </programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by '${mysql_password}'"</programArguments>
                     <ruleList>
                         <compareValues>
                             <logic>equals</logic>
@@ -42,9 +38,7 @@
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' = PASSWORD(
-                        '${mysql_password}')"
-                    </programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' = PASSWORD('${mysql_password}')"</programArguments>
                 </runProgram>
             </readyToInstallActionList>
         </component>
@@ -80,6 +74,30 @@
                         </validVersion>
                     </validVersionList>
                 </autodetectJava>
+                <locate>
+                    <command>keytool</command>
+                    <variable>keytool_executable</variable>
+                </locate>
+                <if>
+                    <actionList>
+                        <dirName path="${java_executable}" variable="jbin"/>
+                        <setInstallerVariable name="keytool_executable" value="${jbin}\keytool.exe"/>
+                    </actionList>
+                    <conditionRuleList>
+                        <platformTest type ="windows"/>
+                        <compareText logic="equals" text="${keytool_executable}" value=""/>
+                    </conditionRuleList>
+                </if>
+                <throwError>
+                    <text>Unable to find keytool command</text>
+                    <ruleList>
+                        <compareText>
+                            <logic>equals</logic>
+                            <text>${keytool_executable}</text>
+                            <value></value>
+                        </compareText>
+                    </ruleList>
+                </throwError>
             </initializationActionList>
             <parameterList>
                 <passwordParameter>
@@ -104,14 +122,19 @@
             <postInstallationActionList>
                 <if>
                     <actionList>
-                        <unzip>
-                            <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile>
-                        </unzip>
+                   <unzip>  
+ <destinationDirectory>${installdir}</destinationDirectory> 
+ <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile> 
+ </unzip> 
+<!--  <runProgram>  -->
+<!--  <program>${installdir}/distro/glassfish/setup-glassfish.py</program>  -->
+<!--  <programArguments>"${installdir}/glassfish4" "${glassfish_password}"</programArguments>  -->
+<!--  <progressText>Installing Glassfish</progressText>  -->
+<!--   </runProgram>  -->
                         <runProgram>
-                            <program>${installdir}/distro/glassfish/setup-glassfish.py</program>
-                            <programArguments>"${installdir}/glassfish4" "${glassfish_password}"</programArguments>
-                            <progressText>Installing Glassfish</progressText>
+                            <program>${keytool_executable}</program>
+                            <programArguments>-export -keystore	${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as</programArguments>
+                            <progressText>Extracting certificate</progressText>
                         </runProgram>
                         <copyFile>
                             <destination>${installdir}/glassfish4/glassfish/domains/domain1/lib/</destination>
@@ -150,9 +173,7 @@
                         </setInstallerVariable>
                     </actionList>
                     <conditionRuleList>
-                        <fileExists>
-                            <path>${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar</path>
-                        </fileExists>
+                        <fileExists path="${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar"/>
                     </conditionRuleList>
                     <elseActionList>
                         <setInstallerVariable>
@@ -198,9 +219,7 @@
                     <programArguments>stop-domain</programArguments>
                     <progressText>Stopping glassfish</progressText>
                     <onErrorActionList>
-                        <throwError>
-                            <text>asadmin stop-domain failed with: ${program_stdout} ${program_stderr}</text>
-                        </throwError>
+                        <throwError text="asadmin stop-domain failed with: ${program_stdout}${program_stderr}"/>
                     </onErrorActionList>
                 </runProgram>
             </preUninstallationActionList>
@@ -209,7 +228,8 @@
             <name>authn</name>
             <description>Authenticators</description>
             <canBeEdited>1</canBeEdited>
-            <detailedDescription>You must include at least one authenticator to allow login to ICAT.</detailedDescription>
+            <detailedDescription>You must include at least one authenticator to allow login to ICAT.
+			</detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentList>
@@ -236,8 +256,8 @@
                                 <writeFile>
                                     <path>${installdir}/authn_anon/authn_anon-setup.properties</path>
                                     <text>glassfish=${installdir}/glassfish4
-                                        port=4848
-                                    </text>
+										port=4848
+									</text>
                                 </writeFile>
                                 <copyFile>
                                     <destination>${installdir}/authn_anon/authn_anon.properties</destination>
@@ -256,14 +276,12 @@
                             <files>${installdir}/authn_anon/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                        <runProgram>
-                            <program>${installdir}/authn_anon/setup</program>
-                            <programArguments>-v install</programArguments>
+                        <runProgram workingDirectory="${installdir}/authn_anon">
+                            <program>${python_executable}</program>
+                            <programArguments>${installdir.dos}/authn_anon/setup -v install</programArguments>
                             <progressText>Deploying ANON Authenticator</progressText>
                             <onErrorActionList>
-                                <throwError>
-                                    <text>${program_stdout}${program_stderr}</text>
-                                </throwError>
+                                <throwError text="${program_stdout}${program_stderr}"/>
                             </onErrorActionList>
                         </runProgram>
                     </postInstallationActionList>
@@ -278,7 +296,6 @@
                     <parameterList>
                         <parameterGroup>
                             <name>SIMPLEConfiguration</name>
-                            <title>Simple Authenticator Users</title>
                             <explanation>Simple Authenticator Configuration</explanation>
                             <value></value>
                             <default></default>
@@ -414,10 +431,7 @@
                         <if>
                             <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
                             <actionList>
-                                <generateRandomValue>
-                                    <length>5</length>
-                                    <variable>tname</variable>
-                                </generateRandomValue>
+                                <generateRandomValue length="5" variable="tname"/>
                                 <httpGet filename="${system_temp_directory}/${tname}" url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_simple/${authn_simple_version}/authn_simple-${authn_simple_version}-distro.zip"/>
                                 <unzip>
                                     <destinationDirectory>${installdir}</destinationDirectory>
@@ -426,12 +440,10 @@
                                 <writeFile>
                                     <path>${installdir}/authn_simple/authn_simple-setup.properties</path>
                                     <text>glassfish=${installdir}/glassfish4
-                                        port=4848
-                                    </text>
+										port=4848
+									</text>
                                 </writeFile>
-                                <copyFile>
-                                    <destination>${installdir}/authn_simple/authn_simple.properties</destination>
-                                    <origin>${installdir}/authn_simple/authn_simple.properties.example</origin>
+                                <copyFile origin="${installdir}/authn_simple/authn_simple.properties.example" destination="${installdir}/authn_simple/authn_simple.properties">
                                     <ruleList>
                                         <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
                                     </ruleList>
@@ -442,13 +454,45 @@
                                 <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties.example"/>
                             </conditionRuleList>
                         </if>
+                        <setInstallerVariable name="n" value="0"/>
+                        <setInstallerVariable name="user_list" value=""/>
+                        <while>
+                            <actionList>
+                                <if>
+                                    <actionList>
+                                        <propertiesFileSet>
+                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                            <key>user.${user${n}}.password</key>
+                                            <value>${password${n}}</value>
+                                        </propertiesFileSet>
+                                        <setInstallerVariable name="user_list" value="${user_list} ${user${n}}"/>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <compareText negate="1" logic="equals" text="${user{$n}}" value=""/>
+                                    </conditionRuleList>
+                                </if>
+                                <mathExpression text="${n} + 1" variable="n"/>
+                            </actionList>
+                            <conditionRuleList>
+                                <compareValues>
+                                    <logic>less</logic>
+                                    <value1>${n}</value1>
+                                    <value2>5</value2>
+                                </compareValues>
+                            </conditionRuleList>
+                        </while>
+                        <propertiesFileSet>
+                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                            <key>user.list</key>
+                            <value>${user_list}</value>
+                        </propertiesFileSet>
                         <changePermissions>
                             <files>${installdir}/authn_simple/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                        <runProgram>
-                            <program>${installdir}/authn_simple/setup</program>
-                            <programArguments>-v install</programArguments>
+                          <runProgram workingDirectory="${installdir}/authn_simple">
+                            <program>${python_executable}</program>
+                            <programArguments>${installdir.dos}/authn_simple/setup -v install</programArguments>
                             <progressText>Deploying Simple Authenticator</progressText>
                             <onErrorActionList>
                                 <throwError>
@@ -472,9 +516,7 @@
                             <name>authn_ldap</name>
                             <platforms>all</platforms>
                             <distributionFileList>
-                                <distributionFile allowWildcards="1">
-                                    <origin>authn_ldap/*</origin>
-                                </distributionFile>
+                                <distributionFile allowWildcards="1" origin="authn_ldap/*"/>
                             </distributionFileList>
                         </folder>
                     </folderList>
@@ -498,9 +540,7 @@
                                 <stringParameter>
                                     <name>security_principal</name>
                                     <description>security_principal</description>
-                                    <explanation>The % character in the
-                                        security_principal will be replaced by the specified user name.
-                                    </explanation>
+                                    <explanation>The % character in the security_principal will be replaced by the specified user name.</explanation>
                                     <value>${security_principal}</value>
                                     <default></default>
                                     <allowEmptyValue>0</allowEmptyValue>
@@ -554,9 +594,7 @@
                                         </foreach>
                                     </actionList>
                                     <conditionRuleList>
-                                        <fileExists>
-                                            <path>${installdir}/authn_ldap/authn_ldap.properties</path>
-                                        </fileExists>
+                                        <fileExists path="${installdir}/authn_ldap/authn_ldap.properties"/>
                                     </conditionRuleList>
                                     <elseActionList>
                                         <setInstallerVariable name="provider_url" value=""/>
@@ -578,26 +616,16 @@
                         <writeFile>
                             <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
                             <text>glassfish=${installdir}/glassfish4
-                                port=4848
-                            </text>
+								port=4848
+							</text>
                             <ruleList>
-                                <fileExists>
-                                    <negate>1</negate>
-                                    <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
-                                </fileExists>
+                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap-setup.properties"/>
                             </ruleList>
                         </writeFile>
-                        <touchFile>
-                            <path>${installdir}/authn_ldap/configured</path>
-                        </touchFile>
-                        <copyFile>
-                            <destination>${installdir}/authn_ldap/authn_ldap.properties</destination>
-                            <origin>${installdir}/authn_ldap/authn_ldap.properties.example</origin>
+                        <touchFile path="${installdir}/authn_ldap/configured"/>
+                        <copyFile origin="${installdir}/authn_ldap/authn_ldap.properties.example" destination="${installdir}/authn_ldap/authn_ldap.properties">
                             <ruleList>
-                                <fileExists>
-                                    <negate>1</negate>
-                                    <path>${installdir}/authn_ldap/authn_ldap.properties</path>
-                                </fileExists>
+                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties"/>
                             </ruleList>
                         </copyFile>
                         <propertiesFileSet>
@@ -619,9 +647,9 @@
                             <files>${installdir}/authn_ldap/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                        <runProgram>
-                            <program>${installdir}/authn_ldap/setup</program>
-                            <programArguments>-v install</programArguments>
+                         <runProgram workingDirectory="${installdir}/authn_ldap">
+                            <program>${python_executable}</program>
+                            <programArguments>${installdir.dos}/authn_ldap/setup -v install</programArguments>
                             <progressText>Deploying LDAP Authenticator</progressText>
                             <onErrorActionList>
                                 <throwError>
@@ -635,7 +663,7 @@
                     <name>authn_db</name>
                     <description>Database Authenticator</description>
                     <canBeEdited>1</canBeEdited>
-                    <detailedDescription>An authenticator that makes use of the contents of a relational database.</detailedDescription>
+                    <detailedDescription>An authenticator that makes use of the	contents of a relational database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
                     <folderList>
@@ -645,23 +673,19 @@
                             <name>authn_db</name>
                             <platforms>all</platforms>
                             <distributionFileList>
-                                <distributionFile allowWildcards="1">
-                                    <origin>authn_db/*</origin>
-                                </distributionFile>
+                                <distributionFile allowWildcards="1" origin="authn_db/*"/>
                             </distributionFileList>
                         </folder>
                     </folderList>
                     <postInstallationActionList>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on authn_db.* to '${mysql_username}'@'localhost'"
-                            </programArguments>
+                            <programArguments>-u root -p${mysql_root_password} -N -B -e	"grant all on authn_db.* to '${mysql_username}'@'localhost'"</programArguments>
                             <progressText>Configuring authn_db database</progressText>
                         </runProgram>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"
-                            </programArguments>
+                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"</programArguments>
                             <progressText>Configuring authn_db database</progressText>
                             <onErrorActionList>
                                 <throwError>
@@ -676,31 +700,24 @@
                         <writeFile>
                             <path>${installdir}/authn_db/authn_db-setup.properties</path>
                             <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                                authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
-                                glassfish=${installdir}/glassfish4
-                                port=4848
-                            </text>
+								authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
+								glassfish=${installdir}/glassfish4
+								port=4848
+							</text>
                         </writeFile>
-                        <touchFile>
-                            <path>${installdir}/authn_db/configured</path>
-                        </touchFile>
-                        <copyFile>
-                            <destination>${installdir}/authn_db/authn_db.properties</destination>
-                            <origin>${installdir}/authn_db/authn_db.properties.example</origin>
+                        <touchFile path="${installdir}/authn_db/configured"/>
+                        <copyFile origin="${installdir}/authn_db/authn_db.properties.example" destination="${installdir}/authn_db/authn_db.properties">
                             <ruleList>
-                                <fileExists>
-                                    <negate>1</negate>
-                                    <path>${installdir}/authn_db/authn_db.properties</path>
-                                </fileExists>
+                                <fileExists negate="1" path="${installdir}/authn_db/authn_db.properties"/>
                             </ruleList>
                         </copyFile>
                         <changePermissions>
                             <files>${installdir}/authn_db/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                        <runProgram>
-                            <program>${installdir}/authn_db/setup</program>
-                            <programArguments>-v install</programArguments>
+                         <runProgram workingDirectory="${installdir}/authn_db">
+                            <program>${python_executable}</program>
+                            <programArguments>${installdir.dos}/authn_db/setup -v install</programArguments>
                             <progressText>Deploying Database Authenticator</progressText>
                             <onErrorActionList>
                                 <throwError>
@@ -720,9 +737,7 @@
             <selected>1</selected>
             <show>0</show>
             <componentSelectionValidationActionList>
-                <throwError>
-                    <text>You must install at least one authenticator.
-                    </text>
+                <throwError text="You must install at least one authenticator.">
                     <ruleList>
                         <isFalse value="${component(authn).component(authn_anon).selected}"/>
                         <isFalse value="${component(authn).component(authn_ldap).selected}"/>
@@ -765,8 +780,7 @@
                         <stringParameter>
                             <name>maxEntities</name>
                             <description>maxEntities</description>
-                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.
-                            </explanation>
+                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.</explanation>
                             <value>${maxEntities}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -804,19 +818,15 @@
             <postInstallationActionList>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on icat.* to '${mysql_username}'@'localhost'"
-                    </programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on icat.* to '${mysql_username}'@'localhost'"</programArguments>
                     <progressText>Configuring icat database</progressText>
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists icat"
-                    </programArguments>
+                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists icat"</programArguments>
                     <progressText>Configuring icat database</progressText>
                     <onErrorActionList>
-                        <throwError>
-                            <text>${program_stderr}</text>
-                        </throwError>
+                        <throwError text="${program_stderr}"/>
                     </onErrorActionList>
                 </runProgram>
                 <unzip>
@@ -830,14 +840,12 @@
                 <writeFile>
                     <path>${installdir}/icat.server/icat-setup.properties</path>
                     <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=icat
-                        glassfish=${installdir}/glassfish4
-                        port=4848
-                    </text>
+						dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=icat
+						glassfish=${installdir}/glassfish4
+						port=4848
+					</text>
                 </writeFile>
-                <copyFile>
-                    <destination>${installdir}/icat.server/icat.properties</destination>
-                    <origin>${installdir}/icat.server/icat.properties.example</origin>
+                <copyFile origin="${installdir}/icat.server/icat.properties.example" destination="${installdir}/icat.server/icat.properties">
                     <ruleList>
                         <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
                     </ruleList>
@@ -882,14 +890,12 @@
                     <files>${installdir}/icat.properties/*.properties</files>
                     <permissions>0600</permissions>
                 </changePermissions>
-                <runProgram>
-                    <program>${installdir}/icat.server/setup</program>
-                    <programArguments>-v install</programArguments>
+                  <runProgram workingDirectory="${installdir}/icat.server">
+                    <program>${python_executable}</program>
+                    <programArguments>${installdir.dos}/icat.server/setup -v install</programArguments>
                     <progressText>Deploying ICAT Server</progressText>
                     <onErrorActionList>
-                        <throwError>
-                            <text>${program_stdout}${program_stderr}</text>
-                        </throwError>
+                        <throwError text="${program_stdout}${program_stderr}"/>
                     </onErrorActionList>
                 </runProgram>
 
@@ -918,13 +924,11 @@
             <name>topcat</name>
             <description>TopCAT</description>
             <canBeEdited>1</canBeEdited>
-            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
+            <detailedDescription>This is the server to upload and download data	files.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentSelectionValidationActionList>
-                <throwError>
-                    <text>topCAT cannot be installed without the IDS.
-                    </text>
+                <throwError text="TopCAT cannot be installed without the IDS.">
                     <ruleList>
                         <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
@@ -939,9 +943,7 @@
             <selected>1</selected>
             <show>1</show>
             <componentSelectionValidationActionList>
-                <throwError>
-                    <text>IJP cannot be installed without the IDS.
-                    </text>
+                <throwError text="IJP cannot be installed without the IDS.">
                     <ruleList>
                         <isFalse value="${component(ids_server).selected}"/>
                     </ruleList>
@@ -959,8 +961,7 @@
             <command>python</command>
             <variable>python_executable</variable>
         </locate>
-        <throwError>
-            <text>No Python installation was found. Please install Python 2.4 to 2.x and try again.</text>
+        <throwError text="No Python installation was found. Please install Python 2.4 to 2.x and try again.">
             <ruleList>
                 <compareText>
                     <logic>equals</logic>
@@ -988,6 +989,31 @@
             <command>mysql</command>
             <variable>mysql_executable</variable>
         </locate>
+        <setInstallerVariableFromScriptOutput>
+            <exec>cmd</exec>
+            <execArgs>/c dir "c:\program files\mysql\mysql.exe" /s /b</execArgs>
+            <name>mysql_executable</name>
+            <ruleList>
+                <platformTest>
+                    <type>windows</type>
+                </platformTest>
+                <compareText>
+                    <logic>equals</logic>
+                    <text>${mysql_executable}</text>
+                    <value></value>
+                </compareText>
+            </ruleList>
+        </setInstallerVariableFromScriptOutput>
+        <throwError>
+            <text>Unable to find mysql command</text>
+            <ruleList>
+                <compareText>
+                    <logic>equals</logic>
+                    <text>${mysql_executable}</text>
+                    <value></value>
+                </compareText>
+            </ruleList>
+        </throwError>
     </initializationActionList>
     <postInstallationActionList>
         <addDirectoriesToUninstaller files="${installdir}/distro/"/>
@@ -1038,18 +1064,14 @@
                     <allowEmptyValue>1</allowEmptyValue>
                     <width>20</width>
                     <ruleList>
-                        <isTrue>
-                            <value>${installer_is_root_install}</value>
-                        </isTrue>
-                        <isFalse>
-                            <value>${glassfish_installed}</value>
-                        </isFalse>
+                        <isTrue value="${installer_is_root_install}"/>
+                        <isFalse value="${glassfish_installed}"/>
                     </ruleList>
                 </stringParameter>
                 <passwordParameter>
                     <name>mysql_root_password</name>
                     <description>Password</description>
-                    <explanation>MySQL root password. This password is required to configure the required databases</explanation>
+                    <explanation>MySQL root password. This password is required to configure the required databases.</explanation>
                     <value></value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
@@ -1069,7 +1091,7 @@
                 <passwordParameter>
                     <name>mysql_password</name>
                     <description>Password</description>
-                    <explanation>Password of MySQL user who owns the ICAT databases - it will be updated if necessary</explanation>
+                    <explanation>Password of MySQL user who owns the ICAT databases - it will be updated if necessary.</explanation>
                     <value></value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
@@ -1080,4 +1102,3 @@
         </parameterGroup>
     </parameterList>
 </project>
-
