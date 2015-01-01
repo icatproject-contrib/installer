@@ -7,6 +7,44 @@
     <leftImage>logo.gif</leftImage>
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
+    <functionDefinitionList>
+        <actionDefinition name="asadmin">
+            <actionList>
+                <setInstallerVariable name="msg" value="${cmd}">
+                    <ruleList>
+                        <compareText logic="equals" text="${msg} " value=""/>
+                    </ruleList>
+                </setInstallerVariable>
+                <runProgram>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>${cmd}</programArguments>
+                    <progressText>${msg}</progressText>
+                    <onErrorActionList>
+                        <throwError text="asadmin ${cmd} failed with: ${program_stderr}${program_stdout}"/>
+                    </onErrorActionList>
+                </runProgram>
+                <setInstallerVariable name="msg" value=""/>
+            </actionList>
+            <parameterList>
+                <stringParameter name="cmd">
+                    <description></description>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
+                <stringParameter name="msg">
+                    <description></description>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
+            </parameterList>
+        </actionDefinition>
+    </functionDefinitionList>
     <componentList>
         <component>
             <name>MySQL</name>
@@ -84,7 +122,7 @@
                         <setInstallerVariable name="keytool_executable" value="${jbin}\keytool.exe"/>
                     </actionList>
                     <conditionRuleList>
-                        <platformTest type ="windows"/>
+                        <platformTest type="windows"/>
                         <compareText logic="equals" text="${keytool_executable}" value=""/>
                     </conditionRuleList>
                 </if>
@@ -122,15 +160,32 @@
             <postInstallationActionList>
                 <if>
                     <actionList>
-                   <unzip>  
- <destinationDirectory>${installdir}</destinationDirectory> 
- <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile> 
- </unzip> 
-<!--  <runProgram>  -->
-<!--  <program>${installdir}/distro/glassfish/setup-glassfish.py</program>  -->
-<!--  <programArguments>"${installdir}/glassfish4" "${glassfish_password}"</programArguments>  -->
-<!--  <progressText>Installing Glassfish</progressText>  -->
-<!--   </runProgram>  -->
+                        <unzip>
+                            <destinationDirectory>${installdir}</destinationDirectory>
+                            <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile>
+                        </unzip>
+                        <asadmin cmd="delete-domain domain1" msg="delete domain"/>
+                        <generateRandomValue length="5" variable="tname"/>
+                        <writeFile path="${system_temp_directory}/${tname}" text="AS_ADMIN_PASSWORD=${glassfish_password}"/>
+                        <asadmin cmd="-W ${system_temp_directory}/${tname} --user admin create-domain --savelogin domain1" msg="create domain"/>
+                        <deleteFile path="${system_temp_directory}/${tname}"/>
+                        <asadmin cmd="start-domain" msg=""/>
+                        <asadmin cmd="enable-secure-admin" msg=""/>
+                        <asadmin cmd="stop-domain" msg=""/>
+                        <asadmin cmd="start-domain" msg=""/>
+                        <asadmin msg="Set log format">
+                            <cmd>set server.http-service.access-log.format="common"</cmd>
+                        </asadmin>
+                        <asadmin cmd="set server.http-service.access-logging-enabled=true" msg=""/>
+                        <asadmin cmd="set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128" msg=""/>
+                        <asadmin cmd="set configs.config.server-config.cdi-service.enable-implicit-cdi=false" msg=""/>
+                        <asadmin msg="">
+                            <cmd>set server.ejb-container.property.disable-nonportable-jndi-names="true"</cmd>
+                        </asadmin>
+                        <asadmin cmd="delete-ssl --type http-listener http-listener-2" msg=""/>
+                        <asadmin cmd="delete-network-listener http-listener-2" msg=""/>
+                        <asadmin cmd="create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2" msg=""/>
+                        <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg=""/>
                         <runProgram>
                             <program>${keytool_executable}</program>
                             <programArguments>-export -keystore	${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as</programArguments>
@@ -150,16 +205,9 @@
                         </compareValues>
                     </conditionRuleList>
                 </if>
-                <runProgram>
-                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
-                    <programArguments>restart-domain</programArguments>
-                    <progressText>Restarting glassfish</progressText>
-                    <onErrorActionList>
-                        <throwError>
-                            <text>asadmin restart-domain failed with: ${program_stdout}</text>
-                        </throwError>
-                    </onErrorActionList>
-                </runProgram>
+                <asadmin cmd="restart-domain">
+                    <msg></msg>
+                </asadmin>
             </postInstallationActionList>
             <postUninstallationActionList>
                 <deleteFile path="${installdir}/glassfish4/"/>
@@ -255,7 +303,7 @@
                                 </unzip>
                                 <writeFile>
                                     <path>${installdir}/authn_anon/authn_anon-setup.properties</path>
-                                    <text>glassfish=${installdir}/glassfish4
+                                    <text>glassfish=${installdir.dos}/glassfish4
 										port=4848
 									</text>
                                 </writeFile>
@@ -439,11 +487,11 @@
                                 </unzip>
                                 <writeFile>
                                     <path>${installdir}/authn_simple/authn_simple-setup.properties</path>
-                                    <text>glassfish=${installdir}/glassfish4
+                                    <text>glassfish=${installdir.dos}/glassfish4
 										port=4848
 									</text>
                                 </writeFile>
-                                <copyFile origin="${installdir}/authn_simple/authn_simple.properties.example" destination="${installdir}/authn_simple/authn_simple.properties">
+                                <copyFile destination="${installdir}/authn_simple/authn_simple.properties" origin="${installdir}/authn_simple/authn_simple.properties.example">
                                     <ruleList>
                                         <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
                                     </ruleList>
@@ -468,7 +516,7 @@
                                         <setInstallerVariable name="user_list" value="${user_list} ${user${n}}"/>
                                     </actionList>
                                     <conditionRuleList>
-                                        <compareText negate="1" logic="equals" text="${user{$n}}" value=""/>
+                                        <compareText logic="equals" negate="1" text="${user{$n}}" value=""/>
                                     </conditionRuleList>
                                 </if>
                                 <mathExpression text="${n} + 1" variable="n"/>
@@ -490,7 +538,7 @@
                             <files>${installdir}/authn_simple/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                          <runProgram workingDirectory="${installdir}/authn_simple">
+                        <runProgram workingDirectory="${installdir}/authn_simple">
                             <program>${python_executable}</program>
                             <programArguments>${installdir.dos}/authn_simple/setup -v install</programArguments>
                             <progressText>Deploying Simple Authenticator</progressText>
@@ -615,7 +663,7 @@
                         </unzip>
                         <writeFile>
                             <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
-                            <text>glassfish=${installdir}/glassfish4
+                            <text>glassfish=${installdir.dos}/glassfish4
 								port=4848
 							</text>
                             <ruleList>
@@ -623,7 +671,7 @@
                             </ruleList>
                         </writeFile>
                         <touchFile path="${installdir}/authn_ldap/configured"/>
-                        <copyFile origin="${installdir}/authn_ldap/authn_ldap.properties.example" destination="${installdir}/authn_ldap/authn_ldap.properties">
+                        <copyFile destination="${installdir}/authn_ldap/authn_ldap.properties" origin="${installdir}/authn_ldap/authn_ldap.properties.example">
                             <ruleList>
                                 <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties"/>
                             </ruleList>
@@ -647,7 +695,7 @@
                             <files>${installdir}/authn_ldap/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                         <runProgram workingDirectory="${installdir}/authn_ldap">
+                        <runProgram workingDirectory="${installdir}/authn_ldap">
                             <program>${python_executable}</program>
                             <programArguments>${installdir.dos}/authn_ldap/setup -v install</programArguments>
                             <progressText>Deploying LDAP Authenticator</progressText>
@@ -701,12 +749,12 @@
                             <path>${installdir}/authn_db/authn_db-setup.properties</path>
                             <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 								authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
-								glassfish=${installdir}/glassfish4
+								glassfish=${installdir.dos}/glassfish4
 								port=4848
 							</text>
                         </writeFile>
                         <touchFile path="${installdir}/authn_db/configured"/>
-                        <copyFile origin="${installdir}/authn_db/authn_db.properties.example" destination="${installdir}/authn_db/authn_db.properties">
+                        <copyFile destination="${installdir}/authn_db/authn_db.properties" origin="${installdir}/authn_db/authn_db.properties.example">
                             <ruleList>
                                 <fileExists negate="1" path="${installdir}/authn_db/authn_db.properties"/>
                             </ruleList>
@@ -715,7 +763,7 @@
                             <files>${installdir}/authn_db/*.properties</files>
                             <permissions>0600</permissions>
                         </changePermissions>
-                         <runProgram workingDirectory="${installdir}/authn_db">
+                        <runProgram workingDirectory="${installdir}/authn_db">
                             <program>${python_executable}</program>
                             <programArguments>${installdir.dos}/authn_db/setup -v install</programArguments>
                             <progressText>Deploying Database Authenticator</progressText>
@@ -833,19 +881,19 @@
                     <destinationDirectory>${installdir}</destinationDirectory>
                     <zipFile>${installdir}/distro/icat.server/icat.server-${icat_server_version}-distro.zip</zipFile>
                     <ruleList>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties.example"/>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties"/>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties.example"/>
                     </ruleList>
                 </unzip>
-                <writeFile>
+                <writeFile progressText="Configuring icat.server properties">
                     <path>${installdir}/icat.server/icat-setup.properties</path>
                     <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
 						dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=icat
-						glassfish=${installdir}/glassfish4
+						glassfish=${installdir.dos}/glassfish4
 						port=4848
 					</text>
                 </writeFile>
-                <copyFile origin="${installdir}/icat.server/icat.properties.example" destination="${installdir}/icat.server/icat.properties">
+                <copyFile destination="${installdir}/icat.server/icat.properties" origin="${installdir}/icat.server/icat.properties.example">
                     <ruleList>
                         <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
                     </ruleList>
@@ -890,9 +938,10 @@
                     <files>${installdir}/icat.properties/*.properties</files>
                     <permissions>0600</permissions>
                 </changePermissions>
-                  <runProgram workingDirectory="${installdir}/icat.server">
+                <createDirectory path="${user_home_directory}/bin"/>
+                <runProgram workingDirectory="${installdir}/icat.server">
                     <program>${python_executable}</program>
-                    <programArguments>${installdir.dos}/icat.server/setup -v install</programArguments>
+                    <programArguments>${installdir.dos}/icat.server/setup -v install --binDir=${user_home_directory}/bin</programArguments>
                     <progressText>Deploying ICAT Server</progressText>
                     <onErrorActionList>
                         <throwError text="${program_stdout}${program_stderr}"/>
@@ -1102,3 +1151,4 @@
         </parameterGroup>
     </parameterList>
 </project>
+
