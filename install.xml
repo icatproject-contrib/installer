@@ -2,8 +2,9 @@
     <shortName>icat</shortName>
     <fullName>ICAT</fullName>
     <version>1.0</version>
-    <readmeFile>README.txt</readmeFile>
-    <licenseFile>LICENSE.txt</licenseFile>
+
+    <!-- <readmeFile>README.txt</readmeFile> 
+ <licenseFile>LICENSE.txt</licenseFile> -->
     <leftImage>logo.gif</leftImage>
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
@@ -55,7 +56,9 @@
             <readyToInstallActionList>
                 <setInstallerVariableFromScriptOutput>
                     <exec>${mysql_executable}</exec>
-                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user ='${mysql_username}'"</execArgs>
+                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
+                        ='${mysql_username}'"
+                    </execArgs>
                     <name>result</name>
                     <onErrorActionList>
                         <throwError>
@@ -65,7 +68,9 @@
                 </setInstallerVariableFromScriptOutput>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by '${mysql_password}'"</programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by
+                        '${mysql_password}'"
+                    </programArguments>
                     <ruleList>
                         <compareValues>
                             <logic>equals</logic>
@@ -76,7 +81,9 @@
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' = PASSWORD('${mysql_password}')"</programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' =
+                        PASSWORD('${mysql_password}')"
+                    </programArguments>
                 </runProgram>
             </readyToInstallActionList>
         </component>
@@ -140,13 +147,13 @@
             <parameterList>
                 <passwordParameter>
                     <name>glassfish_password</name>
-                    <title>Password for the Glassfish admin account</title>
-                    <description></description>
-                    <explanation></explanation>
+                    <title> Glassfish admin account</title>
+                    <description>Password</description>
+                    <explanation>Glassfish will be installed with the admin password you specify.</explanation>
                     <value></value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
-                    <descriptionRetype></descriptionRetype>
+                    <descriptionRetype>Retype password</descriptionRetype>
                     <width>20</width>
                     <ruleList>
                         <compareValues>
@@ -188,7 +195,8 @@
                         <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg=""/>
                         <runProgram>
                             <program>${keytool_executable}</program>
-                            <programArguments>-export -keystore	${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as</programArguments>
+                            <programArguments>-export -keystore ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file
+                                ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as</programArguments>
                             <progressText>Extracting certificate</progressText>
                         </runProgram>
                         <copyFile>
@@ -205,8 +213,15 @@
                         </compareValues>
                     </conditionRuleList>
                 </if>
-                <asadmin cmd="restart-domain">
-                    <msg></msg>
+                <runProgram>
+                    <abortOnError>0</abortOnError>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>stop-domain</programArguments>
+                    <progressText>Stop glassfish</progressText>
+                    <showMessageOnError>0</showMessageOnError>
+                </runProgram>
+                <asadmin cmd="start-domain">
+                    <msg>Start glassfish</msg>
                 </asadmin>
             </postInstallationActionList>
             <postUninstallationActionList>
@@ -277,7 +292,7 @@
             <description>Authenticators</description>
             <canBeEdited>1</canBeEdited>
             <detailedDescription>You must include at least one authenticator to allow login to ICAT.
-			</detailedDescription>
+            </detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentList>
@@ -304,8 +319,8 @@
                                 <writeFile>
                                     <path>${installdir}/authn_anon/authn_anon-setup.properties</path>
                                     <text>glassfish=${installdir.dos}/glassfish4
-										port=4848
-									</text>
+                                        port=4848
+                                    </text>
                                 </writeFile>
                                 <copyFile>
                                     <destination>${installdir}/authn_anon/authn_anon.properties</destination>
@@ -329,7 +344,8 @@
                             <programArguments>${installdir.dos}/authn_anon/setup -v install</programArguments>
                             <progressText>Deploying ANON Authenticator</progressText>
                             <onErrorActionList>
-                                <throwError text="${program_stdout}${program_stderr}"/>
+                                <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
+                                <exit exitCode="1"/>
                             </onErrorActionList>
                         </runProgram>
                     </postInstallationActionList>
@@ -344,13 +360,14 @@
                     <parameterList>
                         <parameterGroup>
                             <name>SIMPLEConfiguration</name>
-                            <explanation>Simple Authenticator Configuration</explanation>
+                            <title>Simple Authenticator Configuration</title>
+                            <explanation></explanation>
                             <value></value>
                             <default></default>
                             <parameterList>
                                 <parameterGroup>
                                     <name>SIMPLEConfigurationUser0</name>
-                                    <explanation>User 0</explanation>
+                                    <explanation>User 1</explanation>
                                     <value></value>
                                     <default></default>
                                     <parameterList>
@@ -376,7 +393,7 @@
                                 </parameterGroup>
                                 <parameterGroup>
                                     <name>SIMPLEConfigurationUser1</name>
-                                    <explanation>User 1</explanation>
+                                    <explanation>User 2</explanation>
                                     <value></value>
                                     <default></default>
                                     <parameterList>
@@ -402,7 +419,7 @@
                                 </parameterGroup>
                                 <parameterGroup>
                                     <name>SIMPLEConfigurationUser2</name>
-                                    <explanation>User 2</explanation>
+                                    <explanation>User 3</explanation>
                                     <value></value>
                                     <default></default>
                                     <parameterList>
@@ -420,6 +437,58 @@
                                             <description>Password</description>
                                             <explanation></explanation>
                                             <value>${password2}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>20</width>
+                                        </stringParameter>
+                                    </parameterList>
+                                </parameterGroup>
+                                <parameterGroup>
+                                    <name>SIMPLEConfigurationUser3</name>
+                                    <explanation>User 4</explanation>
+                                    <value></value>
+                                    <default></default>
+                                    <parameterList>
+                                        <stringParameter>
+                                            <name>user3</name>
+                                            <description>Name</description>
+                                            <explanation></explanation>
+                                            <value>${user3}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>30</width>
+                                        </stringParameter>
+                                        <stringParameter>
+                                            <name>password3</name>
+                                            <description>Password</description>
+                                            <explanation></explanation>
+                                            <value>${password3}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>20</width>
+                                        </stringParameter>
+                                    </parameterList>
+                                </parameterGroup>
+                                <parameterGroup>
+                                    <name>SIMPLEConfigurationUser4</name>
+                                    <explanation>User 5</explanation>
+                                    <value></value>
+                                    <default></default>
+                                    <parameterList>
+                                        <stringParameter>
+                                            <name>user4</name>
+                                            <description>Name</description>
+                                            <explanation></explanation>
+                                            <value>${user4}</value>
+                                            <default></default>
+                                            <allowEmptyValue>1</allowEmptyValue>
+                                            <width>30</width>
+                                        </stringParameter>
+                                        <stringParameter>
+                                            <name>password4</name>
+                                            <description>Password</description>
+                                            <explanation></explanation>
+                                            <value>${password4}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
                                             <width>20</width>
@@ -488,8 +557,8 @@
                                 <writeFile>
                                     <path>${installdir}/authn_simple/authn_simple-setup.properties</path>
                                     <text>glassfish=${installdir.dos}/glassfish4
-										port=4848
-									</text>
+                                        port=4848
+                                    </text>
                                 </writeFile>
                                 <copyFile destination="${installdir}/authn_simple/authn_simple.properties" origin="${installdir}/authn_simple/authn_simple.properties.example">
                                     <ruleList>
@@ -543,9 +612,8 @@
                             <programArguments>${installdir.dos}/authn_simple/setup -v install</programArguments>
                             <progressText>Deploying Simple Authenticator</progressText>
                             <onErrorActionList>
-                                <throwError>
-                                    <text>${program_stdout}${program_stderr}</text>
-                                </throwError>
+                                <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
+                                <exit exitCode="1"/>
                             </onErrorActionList>
                         </runProgram>
                     </postInstallationActionList>
@@ -664,8 +732,8 @@
                         <writeFile>
                             <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
                             <text>glassfish=${installdir.dos}/glassfish4
-								port=4848
-							</text>
+                                port=4848
+                            </text>
                             <ruleList>
                                 <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap-setup.properties"/>
                             </ruleList>
@@ -711,7 +779,7 @@
                     <name>authn_db</name>
                     <description>Database Authenticator</description>
                     <canBeEdited>1</canBeEdited>
-                    <detailedDescription>An authenticator that makes use of the	contents of a relational database.</detailedDescription>
+                    <detailedDescription>An authenticator that makes use of the contents of a relational database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
                     <folderList>
@@ -728,12 +796,14 @@
                     <postInstallationActionList>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u root -p${mysql_root_password} -N -B -e	"grant all on authn_db.* to '${mysql_username}'@'localhost'"</programArguments>
+                            <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on authn_db.* to '${mysql_username}'@'localhost'"
+                            </programArguments>
                             <progressText>Configuring authn_db database</progressText>
                         </runProgram>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"</programArguments>
+                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"
+                            </programArguments>
                             <progressText>Configuring authn_db database</progressText>
                             <onErrorActionList>
                                 <throwError>
@@ -748,10 +818,10 @@
                         <writeFile>
                             <path>${installdir}/authn_db/authn_db-setup.properties</path>
                             <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-								authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
-								glassfish=${installdir.dos}/glassfish4
-								port=4848
-							</text>
+                                authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
+                                glassfish=${installdir.dos}/glassfish4
+                                port=4848
+                            </text>
                         </writeFile>
                         <touchFile path="${installdir}/authn_db/configured"/>
                         <copyFile destination="${installdir}/authn_db/authn_db.properties" origin="${installdir}/authn_db/authn_db.properties.example">
@@ -816,6 +886,13 @@
                     <value></value>
                     <default></default>
                     <parameterList>
+                        <stringParameter name="icatDB" value="icat" default="icat">
+                            <description>Name of MySQL Database to use for ICAT server</description>
+                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
+                                required tables to it.</explanation>
+                            <allowEmptyValue>1</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
                         <stringParameter>
                             <name>rootUserNames</name>
                             <description>rootUserNames</description>
@@ -828,7 +905,8 @@
                         <stringParameter>
                             <name>maxEntities</name>
                             <description>maxEntities</description>
-                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.</explanation>
+                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.
+                            </explanation>
                             <value>${maxEntities}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -866,12 +944,13 @@
             <postInstallationActionList>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on icat.* to '${mysql_username}'@'localhost'"</programArguments>
+                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on ${icatDB}.* to '${mysql_username}'@'localhost'"
+                    </programArguments>
                     <progressText>Configuring icat database</progressText>
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists icat"</programArguments>
+                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists ${icatDB}"</programArguments>
                     <progressText>Configuring icat database</progressText>
                     <onErrorActionList>
                         <throwError text="${program_stderr}"/>
@@ -879,6 +958,7 @@
                 </runProgram>
                 <unzip>
                     <destinationDirectory>${installdir}</destinationDirectory>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
                     <zipFile>${installdir}/distro/icat.server/icat.server-${icat_server_version}-distro.zip</zipFile>
                     <ruleList>
                         <fileExists negate="1" path="${installdir}/icat.server/icat.properties"/>
@@ -888,14 +968,14 @@
                 <writeFile progressText="Configuring icat.server properties">
                     <path>${installdir}/icat.server/icat-setup.properties</path>
                     <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-						dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=icat
-						glassfish=${installdir.dos}/glassfish4
-						port=4848
-					</text>
+                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${icatDB}
+                        glassfish=${installdir.dos}/glassfish4
+                        port=4848
+                    </text>
                 </writeFile>
                 <copyFile destination="${installdir}/icat.server/icat.properties" origin="${installdir}/icat.server/icat.properties.example">
                     <ruleList>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.server.properties"/>
+                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties"/>
                     </ruleList>
                 </copyFile>
                 <propertiesFileSet>
@@ -948,7 +1028,7 @@
                     </onErrorActionList>
                 </runProgram>
 
-                <!-- This restart should not be necessary -->
+                <!-- This restart should not be necessary
                 <runProgram>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>disable icat.server-${icat_server_version}</programArguments>
@@ -958,8 +1038,17 @@
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>enable icat.server-${icat_server_version}</programArguments>
                     <progressText>Enable icat.server</progressText>
-                </runProgram>
+                </runProgram> -->
             </postInstallationActionList>
+            <preInstallationActionList>
+                <runProgram>
+                    <abortOnError>0</abortOnError>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>undeploy icat.server-${icat_server_version}</programArguments>
+                    <progressText>Undeploy icat server</progressText>
+                    <showMessageOnError>0</showMessageOnError>
+                </runProgram>
+            </preInstallationActionList>
         </component>
         <component>
             <name>ids_server</name>
@@ -973,7 +1062,7 @@
             <name>topcat</name>
             <description>TopCAT</description>
             <canBeEdited>1</canBeEdited>
-            <detailedDescription>This is the server to upload and download data	files.</detailedDescription>
+            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentSelectionValidationActionList>
@@ -1110,7 +1199,7 @@
                     <explanation>Who to run glassfish as. The account will be created if necessary.</explanation>
                     <value>glassfish</value>
                     <default>glassfish</default>
-                    <allowEmptyValue>1</allowEmptyValue>
+                    <allowEmptyValue>0</allowEmptyValue>
                     <width>20</width>
                     <ruleList>
                         <isTrue value="${installer_is_root_install}"/>
@@ -1131,20 +1220,20 @@
                 <stringParameter>
                     <name>mysql_username</name>
                     <description>Username</description>
-                    <explanation>MySQL user who owns the ICAT databases</explanation>
+                    <explanation>MySQL user who will own the ICAT databases - MySQL account will be created if necessary</explanation>
                     <value>icat</value>
                     <default>icat</default>
-                    <allowEmptyValue>1</allowEmptyValue>
+                    <allowEmptyValue>0</allowEmptyValue>
                     <width>20</width>
                 </stringParameter>
                 <passwordParameter>
                     <name>mysql_password</name>
                     <description>Password</description>
-                    <explanation>Password of MySQL user who owns the ICAT databases - it will be updated if necessary.</explanation>
+                    <explanation>Password of MySQL user who will own the ICAT databases - it will be updated if necessary.</explanation>
                     <value></value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
-                    <descriptionRetype></descriptionRetype>
+                    <descriptionRetype>Retype password</descriptionRetype>
                     <width>20</width>
                 </passwordParameter>
             </parameterList>
