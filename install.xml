@@ -3,12 +3,101 @@
     <fullName>ICAT</fullName>
     <version>1.0</version>
 
-    <!-- <readmeFile>README.txt</readmeFile> 
- <licenseFile>LICENSE.txt</licenseFile> -->
+    <!-- <readmeFile>README.txt</readmeFile> <licenseFile>LICENSE.txt</licenseFile> -->
     <leftImage>logo.gif</leftImage>
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
     <functionDefinitionList>
+        <!-- Prepare to run setup -->
+        <actionDefinition name="prepare">
+            <actionList>
+                <if>
+                    <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
+                    <actionList>
+                        <setInstallerVariable name="url" value="http://www.icatproject.org/mvn/repo/org/icatproject/${component}/${componentVersion}/${component}-${componentVersion}-distro.zip">
+                            <ruleList>
+                                <compareText>
+                                    <logic>equals</logic>
+                                    <text>${url}</text>
+                                    <value></value>
+                                </compareText>
+                            </ruleList>
+                        </setInstallerVariable>
+                        <generateRandomValue length="5" variable="tname"/>
+                        <logMessage>
+                            <text>Fetching distro ${url}</text>
+                        </logMessage>
+                        <httpGet filename="${system_temp_directory}/${tname}" progressText="Fetching distro for ${component}" url="${url}"/>
+                        <unzip destinationDirectory="${installdir}" zipFile="${system_temp_directory}/${tname}"/>
+                        <writeFile path="${installdir}/${component}/${propertyRoot}-setup.properties">
+                            <text>glassfish=${installdir.dos}/glassfish4
+                                port=4848
+                                ${setupProperties}
+                            </text>
+                        </writeFile>
+                        <copyFile>
+                            <destination>${installdir}/${component}/${propertyRoot}.properties</destination>
+                            <origin>${installdir}/${component}/${propertyRoot}.properties.example</origin>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/${component}/${propertyRoot}.properties"/>
+                            </ruleList>
+                        </copyFile>
+                    </actionList>
+                    <conditionRuleList>
+                        <fileExists negate="1" path="${installdir}/${component}/${propertyRoot}.properties"/>
+                        <fileExists negate="1" path="${installdir}/${component}/${propertyRoot}.properties.example"/>
+                    </conditionRuleList>
+                </if>
+            </actionList>
+            <parameterList>
+                <stringParameter name="component" description="" explanation="" value="" default="" allowEmptyValue="0" width="40"/>
+                <stringParameter name="componentVersion" description="" explanation="" value="" default="" allowEmptyValue="0" width="40"/>
+                <stringParameter name="propertyRoot" description="" explanation="" value="" default="" allowEmptyValue="0" width="40"/>
+                <stringParameter name="setupProperties" description="" explanation="" value="" default="" allowEmptyValue="0" width="40"/>
+                <stringParameter name="url" description="" explanation="" value="" default="" allowEmptyValue="1" width="40"/>
+            </parameterList>
+        </actionDefinition>
+
+        <!-- Run setup -v -->
+        <actionDefinition name="setup">
+            <actionList>
+                <changePermissions>
+                    <files>${installdir}/${component}/*.properties</files>
+                    <permissions>0600</permissions>
+                </changePermissions>
+                <runProgram workingDirectory="${installdir}/${component}">
+                    <program>${python_executable}</program>
+                    <programArguments>setup -v install</programArguments>
+                    <progressText>${msg}</progressText>
+                    <onErrorActionList>
+                        <showWarning>
+                            <text>Setup of ${component} failed.
+                                ${program_stderr}${program_stdout}
+                            </text>
+                        </showWarning>
+                        <exit exitCode="1"/>
+                    </onErrorActionList>
+                </runProgram>
+            </actionList>
+            <parameterList>
+                <stringParameter name="component">
+                    <description></description>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
+                <stringParameter name="msg">
+                    <description></description>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <allowEmptyValue>1</allowEmptyValue>
+                    <width>40</width>
+                </stringParameter>
+            </parameterList>
+        </actionDefinition>
         <actionDefinition name="asadmin">
             <actionList>
                 <setInstallerVariable name="msg" value="${cmd}">
@@ -48,6 +137,24 @@
     </functionDefinitionList>
     <componentList>
         <component>
+            <name>other</name>
+            <description>Other stuff</description>
+            <canBeEdited>0</canBeEdited>
+            <selected>1</selected>
+            <show>0</show>
+            <folderList>
+                <folder>
+                    <destination>${installdir}</destination>
+                    <name>top</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile origin="LICENSE.txt"/>
+                        <distributionFile origin="README.txt"/>
+                    </distributionFileList>
+                </folder>
+            </folderList>
+        </component>
+        <component>
             <name>MySQL</name>
             <description>MySQL Server</description>
             <canBeEdited>0</canBeEdited>
@@ -56,7 +163,7 @@
             <readyToInstallActionList>
                 <setInstallerVariableFromScriptOutput>
                     <exec>${mysql_executable}</exec>
-                    <execArgs>-u root -p${mysql_root_password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
+                    <execArgs>-u root -p${mysql_root_password.password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
                         ='${mysql_username}'"
                     </execArgs>
                     <name>result</name>
@@ -68,8 +175,8 @@
                 </setInstallerVariableFromScriptOutput>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "create user '${mysql_username}'@'localhost' identified by
-                        '${mysql_password}'"
+                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "create user '${mysql_username}'@'localhost' identified by
+                        '${mysql_password.password}'"
                     </programArguments>
                     <ruleList>
                         <compareValues>
@@ -81,8 +188,8 @@
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "set password for '${mysql_username}'@'localhost' =
-                        PASSWORD('${mysql_password}')"
+                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "set password for '${mysql_username}'@'localhost' =
+                        PASSWORD('${mysql_password.password}')"
                     </programArguments>
                 </runProgram>
             </readyToInstallActionList>
@@ -93,19 +200,6 @@
             <canBeEdited>0</canBeEdited>
             <selected>1</selected>
             <show>0</show>
-            <folderList>
-                <folder>
-                    <description>Glassfish</description>
-                    <destination>${installdir}/distro/glassfish</destination>
-                    <name>glassfish</name>
-                    <platforms>all</platforms>
-                    <distributionFileList>
-                        <distributionFile allowWildcards="1">
-                            <origin>glassfish/*</origin>
-                        </distributionFile>
-                    </distributionFileList>
-                </folder>
-            </folderList>
             <initializationActionList>
                 <autodetectJava>
                     <promptUser>0</promptUser>
@@ -167,13 +261,18 @@
             <postInstallationActionList>
                 <if>
                     <actionList>
+                        <generateRandomValue>
+                            <length>5</length>
+                            <variable>tname</variable>
+                        </generateRandomValue>
+                        <httpGet filename="${system_temp_directory}/${tname}" progressText="Fetching glassfish distro" url="http://www.icatproject.org/misc/install/glassfish-4.0.zip"/>
                         <unzip>
                             <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/glassfish/glassfish-4.0.zip</zipFile>
+                            <zipFile>${system_temp_directory}/${tname}</zipFile>
                         </unzip>
                         <asadmin cmd="delete-domain domain1" msg="delete domain"/>
                         <generateRandomValue length="5" variable="tname"/>
-                        <writeFile path="${system_temp_directory}/${tname}" text="AS_ADMIN_PASSWORD=${glassfish_password}"/>
+                        <writeFile path="${system_temp_directory}/${tname}" text="AS_ADMIN_PASSWORD=${glassfish_password.password}"/>
                         <asadmin cmd="-W ${system_temp_directory}/${tname} --user admin create-domain --savelogin domain1" msg="create domain"/>
                         <deleteFile path="${system_temp_directory}/${tname}"/>
                         <asadmin cmd="start-domain" msg=""/>
@@ -183,27 +282,18 @@
                         <asadmin msg="Set log format">
                             <cmd>set server.http-service.access-log.format="common"</cmd>
                         </asadmin>
-                        <asadmin cmd="set server.http-service.access-logging-enabled=true" msg=""/>
-                        <asadmin cmd="set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128" msg=""/>
-                        <asadmin cmd="set configs.config.server-config.cdi-service.enable-implicit-cdi=false" msg=""/>
-                        <asadmin msg="">
+                        <asadmin cmd="set server.http-service.access-logging-enabled=true" msg="Configure glassfish logging"/>
+                        <asadmin cmd="set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128" msg="Configure glassfish thread pool"/>
+                        <asadmin cmd="set configs.config.server-config.cdi-service.enable-implicit-cdi=false" msg="Disable implict cdi in glassfish"/>
+                        <asadmin msg="Require portable jndi names in glassfish">
                             <cmd>set server.ejb-container.property.disable-nonportable-jndi-names="true"</cmd>
                         </asadmin>
-                        <asadmin cmd="delete-ssl --type http-listener http-listener-2" msg=""/>
-                        <asadmin cmd="delete-network-listener http-listener-2" msg=""/>
-                        <asadmin cmd="create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2" msg=""/>
-                        <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg=""/>
-                        <runProgram>
-                            <program>${keytool_executable}</program>
-                            <programArguments>-export -keystore ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file
-                                ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as</programArguments>
-                            <progressText>Extracting certificate</progressText>
-                        </runProgram>
-                        <copyFile>
-                            <destination>${installdir}/glassfish4/glassfish/domains/domain1/lib/</destination>
-                            <origin>${installdir}/distro/glassfish/mysql-connector-java-5.1.30-bin.jar</origin>
-                            <progressText>Installing MySQL Connector</progressText>
-                        </copyFile>
+                        <asadmin cmd="delete-ssl --type http-listener http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <asadmin cmd="delete-network-listener http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <asadmin cmd="create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <runProgram program="${keytool_executable}" programArguments="-export -keystore ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file  ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as" progressText="Extracting certificate"/>
+                        <httpGet filename="${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar" progressText="Installing MySQL connector" url="http://www.icatproject.org/misc/install/mysql-connector-java-5.1.30-bin.jar"/>
                     </actionList>
                     <conditionRuleList>
                         <compareValues>
@@ -243,6 +333,13 @@
                             <name>glassfish_installed</name>
                             <value>0</value>
                         </setInstallerVariable>
+                        <runProgram>
+                            <abortOnError>0</abortOnError>
+                            <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                            <programArguments>stop-domain</programArguments>
+                            <progressText>Stop glassfish</progressText>
+                            <showMessageOnError>0</showMessageOnError>
+                        </runProgram>
                         <getProcessUsingPort>
                             <port>4848</port>
                             <variable>glassfish_management</variable>
@@ -290,7 +387,7 @@
         <componentGroup>
             <name>authn</name>
             <description>Authenticators</description>
-            <canBeEdited>1</canBeEdited>
+            <canBeEdited>0</canBeEdited>
             <detailedDescription>You must include at least one authenticator to allow login to ICAT.
             </detailedDescription>
             <selected>1</selected>
@@ -304,50 +401,10 @@
                     <selected>1</selected>
                     <show>1</show>
                     <postInstallationActionList>
-                        <if>
-                            <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
-                            <actionList>
-                                <generateRandomValue>
-                                    <length>5</length>
-                                    <variable>tname</variable>
-                                </generateRandomValue>
-                                <httpGet filename="${system_temp_directory}/${tname}" url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_anon/${authn_anon_version}/authn_anon-${authn_anon_version}-distro.zip"/>
-                                <unzip>
-                                    <destinationDirectory>${installdir}</destinationDirectory>
-                                    <zipFile>${system_temp_directory}/${tname}</zipFile>
-                                </unzip>
-                                <writeFile>
-                                    <path>${installdir}/authn_anon/authn_anon-setup.properties</path>
-                                    <text>glassfish=${installdir.dos}/glassfish4
-                                        port=4848
-                                    </text>
-                                </writeFile>
-                                <copyFile>
-                                    <destination>${installdir}/authn_anon/authn_anon.properties</destination>
-                                    <origin>${installdir}/authn_anon/authn_anon.properties.example</origin>
-                                    <ruleList>
-                                        <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties"/>
-                                    </ruleList>
-                                </copyFile>
-                            </actionList>
-                            <conditionRuleList>
-                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties"/>
-                                <fileExists negate="1" path="${installdir}/authn_anon/authn_anon.properties.example"/>
-                            </conditionRuleList>
-                        </if>
-                        <changePermissions>
-                            <files>${installdir}/authn_anon/*.properties</files>
-                            <permissions>0600</permissions>
-                        </changePermissions>
-                        <runProgram workingDirectory="${installdir}/authn_anon">
-                            <program>${python_executable}</program>
-                            <programArguments>${installdir.dos}/authn_anon/setup -v install</programArguments>
-                            <progressText>Deploying ANON Authenticator</progressText>
-                            <onErrorActionList>
-                                <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
-                                <exit exitCode="1"/>
-                            </onErrorActionList>
-                        </runProgram>
+                        <prepare component="authn_anon" componentVersion="${authn_anon_version}" propertyRoot="authn_anon" setupProperties="">
+                            <url></url>
+                        </prepare>
+                        <setup component="authn_anon" msg="Deploying ANON Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -387,7 +444,7 @@
                                             <value>${password0}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>20</width>
+                                            <width>106</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -413,7 +470,7 @@
                                             <value>${password1}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>20</width>
+                                            <width>106</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -439,7 +496,7 @@
                                             <value>${password2}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>20</width>
+                                            <width>106</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -465,7 +522,7 @@
                                             <value>${password3}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>20</width>
+                                            <width>106</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -491,7 +548,7 @@
                                             <value>${password4}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>20</width>
+                                            <width>106</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -545,38 +602,28 @@
                         </parameterGroup>
                     </parameterList>
                     <postInstallationActionList>
-                        <if>
-                            <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
-                            <actionList>
-                                <generateRandomValue length="5" variable="tname"/>
-                                <httpGet filename="${system_temp_directory}/${tname}" url="http://www.icatproject.org/mvn/repo/org/icatproject/authn_simple/${authn_simple_version}/authn_simple-${authn_simple_version}-distro.zip"/>
-                                <unzip>
-                                    <destinationDirectory>${installdir}</destinationDirectory>
-                                    <zipFile>${system_temp_directory}/${tname}</zipFile>
-                                </unzip>
-                                <writeFile>
-                                    <path>${installdir}/authn_simple/authn_simple-setup.properties</path>
-                                    <text>glassfish=${installdir.dos}/glassfish4
-                                        port=4848
-                                    </text>
-                                </writeFile>
-                                <copyFile destination="${installdir}/authn_simple/authn_simple.properties" origin="${installdir}/authn_simple/authn_simple.properties.example">
-                                    <ruleList>
-                                        <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
-                                    </ruleList>
-                                </copyFile>
-                            </actionList>
-                            <conditionRuleList>
-                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties"/>
-                                <fileExists negate="1" path="${installdir}/authn_simple/authn_simple.properties.example"/>
-                            </conditionRuleList>
-                        </if>
+                        <prepare component="authn_simple" componentVersion="${authn_simple_version}" propertyRoot="authn_simple" setupProperties="">
+                            <url></url>
+                        </prepare>
                         <setInstallerVariable name="n" value="0"/>
                         <setInstallerVariable name="user_list" value=""/>
                         <while>
                             <actionList>
                                 <if>
                                     <actionList>
+                                        <setInstallerVariableFromScriptOutput>
+                                            <exec>${python_executable}</exec>
+                                            <execArgs>-c "import crypt; print crypt.crypt('${password${n}}')"</execArgs>
+                                            <name>password${n}</name>
+                                            <ruleList>
+                                                <regExMatch>
+                                                    <logic>matches</logic>
+                                                    <negate>1</negate>
+                                                    <pattern>^\$.*</pattern>
+                                                    <text>${password${n}}</text>
+                                                </regExMatch>
+                                            </ruleList>
+                                        </setInstallerVariableFromScriptOutput>
                                         <propertiesFileSet>
                                             <file>${installdir}/authn_simple/authn_simple.properties</file>
                                             <key>user.${user${n}}.password</key>
@@ -603,19 +650,7 @@
                             <key>user.list</key>
                             <value>${user_list}</value>
                         </propertiesFileSet>
-                        <changePermissions>
-                            <files>${installdir}/authn_simple/*.properties</files>
-                            <permissions>0600</permissions>
-                        </changePermissions>
-                        <runProgram workingDirectory="${installdir}/authn_simple">
-                            <program>${python_executable}</program>
-                            <programArguments>${installdir.dos}/authn_simple/setup -v install</programArguments>
-                            <progressText>Deploying Simple Authenticator</progressText>
-                            <onErrorActionList>
-                                <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
-                                <exit exitCode="1"/>
-                            </onErrorActionList>
-                        </runProgram>
+                        <setup component="authn_simple" msg="Deploying Simple Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -625,17 +660,6 @@
                     <detailedDescription>An authenticator that makes use of the contents of an LDAP database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
-                    <folderList>
-                        <folder>
-                            <description>authn_ldap</description>
-                            <destination>${installdir}/distro/authn_ldap</destination>
-                            <name>authn_ldap</name>
-                            <platforms>all</platforms>
-                            <distributionFileList>
-                                <distributionFile allowWildcards="1" origin="authn_ldap/*"/>
-                            </distributionFileList>
-                        </folder>
-                    </folderList>
                     <parameterList>
                         <parameterGroup>
                             <name>LDAPConfiguration</name>
@@ -722,28 +746,9 @@
                         </parameterGroup>
                     </parameterList>
                     <postInstallationActionList>
-                        <unzip>
-                            <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/authn_ldap/authn_ldap-${authn_ldap_version}-distro.zip</zipFile>
-                            <ruleList>
-                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties"/>
-                            </ruleList>
-                        </unzip>
-                        <writeFile>
-                            <path>${installdir}/authn_ldap/authn_ldap-setup.properties</path>
-                            <text>glassfish=${installdir.dos}/glassfish4
-                                port=4848
-                            </text>
-                            <ruleList>
-                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap-setup.properties"/>
-                            </ruleList>
-                        </writeFile>
-                        <touchFile path="${installdir}/authn_ldap/configured"/>
-                        <copyFile destination="${installdir}/authn_ldap/authn_ldap.properties" origin="${installdir}/authn_ldap/authn_ldap.properties.example">
-                            <ruleList>
-                                <fileExists negate="1" path="${installdir}/authn_ldap/authn_ldap.properties"/>
-                            </ruleList>
-                        </copyFile>
+                        <prepare component="authn_ldap" componentVersion="${authn_ldap_version}" propertyRoot="authn_ldap" url="http://icatproject.org/misc/install/authn_ldap-1.1.0-distro.zip">
+                            <setupProperties></setupProperties>
+                        </prepare>
                         <propertiesFileSet>
                             <file>${installdir}/authn_ldap/authn_ldap.properties</file>
                             <key>case</key>
@@ -759,20 +764,8 @@
                             <key>security_principal</key>
                             <value>${security_principal}</value>
                         </propertiesFileSet>
-                        <changePermissions>
-                            <files>${installdir}/authn_ldap/*.properties</files>
-                            <permissions>0600</permissions>
-                        </changePermissions>
-                        <runProgram workingDirectory="${installdir}/authn_ldap">
-                            <program>${python_executable}</program>
-                            <programArguments>${installdir.dos}/authn_ldap/setup -v install</programArguments>
-                            <progressText>Deploying LDAP Authenticator</progressText>
-                            <onErrorActionList>
-                                <throwError>
-                                    <text>${program_stdout}${program_stderr}</text>
-                                </throwError>
-                            </onErrorActionList>
-                        </runProgram>
+                        <touchFile path="${installdir}/authn_ldap/configured"/>
+                        <setup component="authn_ldap" msg="Deploying LDAP Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -782,27 +775,31 @@
                     <detailedDescription>An authenticator that makes use of the contents of a relational database.</detailedDescription>
                     <selected>0</selected>
                     <show>1</show>
-                    <folderList>
-                        <folder>
-                            <description>authn_db</description>
-                            <destination>${installdir}/distro/authn_db</destination>
-                            <name>authn_db</name>
-                            <platforms>all</platforms>
-                            <distributionFileList>
-                                <distributionFile allowWildcards="1" origin="authn_db/*"/>
-                            </distributionFileList>
-                        </folder>
-                    </folderList>
+                    <parameterList>
+                        <stringParameter name="authnDB" value="authn_db" default="authn_db">
+                            <title>Database Authenticator Configuration Parameters</title>
+                            <description>Name of MySQL Database to use for Database Authenticator</description>
+                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
+                                required tables to it.
+                            </explanation>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/authn_db/authn_db-setup.properties"/>
+                            </ruleList>
+                        </stringParameter>
+                    </parameterList>
                     <postInstallationActionList>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on authn_db.* to '${mysql_username}'@'localhost'"
+                            <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${authnDB}.* to
+                                '${mysql_username}'@'localhost'"
                             </programArguments>
                             <progressText>Configuring authn_db database</progressText>
                         </runProgram>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists authn_db"
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${authnDB}"
                             </programArguments>
                             <progressText>Configuring authn_db database</progressText>
                             <onErrorActionList>
@@ -811,38 +808,13 @@
                                 </throwError>
                             </onErrorActionList>
                         </runProgram>
-                        <unzip>
-                            <destinationDirectory>${installdir}</destinationDirectory>
-                            <zipFile>${installdir}/distro/authn_db/authn_db-${authn_db_version}-distro.zip</zipFile>
-                        </unzip>
-                        <writeFile>
-                            <path>${installdir}/authn_db/authn_db-setup.properties</path>
-                            <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                                authn_dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=authn_db
-                                glassfish=${installdir.dos}/glassfish4
-                                port=4848
-                            </text>
-                        </writeFile>
-                        <touchFile path="${installdir}/authn_db/configured"/>
-                        <copyFile destination="${installdir}/authn_db/authn_db.properties" origin="${installdir}/authn_db/authn_db.properties.example">
-                            <ruleList>
-                                <fileExists negate="1" path="${installdir}/authn_db/authn_db.properties"/>
-                            </ruleList>
-                        </copyFile>
-                        <changePermissions>
-                            <files>${installdir}/authn_db/*.properties</files>
-                            <permissions>0600</permissions>
-                        </changePermissions>
-                        <runProgram workingDirectory="${installdir}/authn_db">
-                            <program>${python_executable}</program>
-                            <programArguments>${installdir.dos}/authn_db/setup -v install</programArguments>
-                            <progressText>Deploying Database Authenticator</progressText>
-                            <onErrorActionList>
-                                <throwError>
-                                    <text>${program_stdout}${program_stderr}</text>
-                                </throwError>
-                            </onErrorActionList>
-                        </runProgram>
+                        <prepare component="authn_db" componentVersion="${authn_db_version}" propertyRoot="authn_db">
+                            <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                                dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${authnDB}
+                            </setupProperties>
+                            <url></url>
+                        </prepare>
+                        <setup component="authn_db" msg="Deploying Database Authenticator"/>
                     </postInstallationActionList>
                 </component>
             </componentList>
@@ -864,34 +836,25 @@
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
-            <folderList>
-                <folder>
-                    <description>ICAT Server</description>
-                    <destination>${installdir}/distro/icat.server</destination>
-                    <name>icat_server</name>
-                    <platforms>all</platforms>
-                    <distributionFileList>
-                        <distributionFile>
-                            <allowWildcards>1</allowWildcards>
-                            <origin>icat.server/*</origin>
-                        </distributionFile>
-                    </distributionFileList>
-                </folder>
-            </folderList>
             <parameterList>
                 <parameterGroup>
                     <name>ICATConfiguration</name>
                     <title>ICAT Server Configuration Parameters</title>
-                    <explanation>ICAT Server Configuration Parameters</explanation>
+                    <explanation></explanation>
                     <value></value>
                     <default></default>
                     <parameterList>
                         <stringParameter name="icatDB" value="icat" default="icat">
                             <description>Name of MySQL Database to use for ICAT server</description>
-                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
-                                required tables to it.</explanation>
-                            <allowEmptyValue>1</allowEmptyValue>
+                            <explanation>The data base for the ICAT server will be created for you. If you use an existing database an attempt will be
+                                made to add the
+                                required tables to it.
+                            </explanation>
+                            <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/icat.server/icat-setup.properties"/>
+                            </ruleList>
                         </stringParameter>
                         <stringParameter>
                             <name>rootUserNames</name>
@@ -944,40 +907,24 @@
             <postInstallationActionList>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password} -N -B -e "grant all on ${icatDB}.* to '${mysql_username}'@'localhost'"
+                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${icatDB}.* to '${mysql_username}'@'localhost'"
                     </programArguments>
                     <progressText>Configuring icat database</progressText>
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password} -N -B -e "create database if not exists ${icatDB}"</programArguments>
+                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${icatDB}"
+                    </programArguments>
                     <progressText>Configuring icat database</progressText>
                     <onErrorActionList>
                         <throwError text="${program_stderr}"/>
                     </onErrorActionList>
                 </runProgram>
-                <unzip>
-                    <destinationDirectory>${installdir}</destinationDirectory>
-                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
-                    <zipFile>${installdir}/distro/icat.server/icat.server-${icat_server_version}-distro.zip</zipFile>
-                    <ruleList>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties"/>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties.example"/>
-                    </ruleList>
-                </unzip>
-                <writeFile progressText="Configuring icat.server properties">
-                    <path>${installdir}/icat.server/icat-setup.properties</path>
-                    <text>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                <prepare component="icat.server" componentVersion="${icat_server_version}" propertyRoot="icat" url="http://www.icatproject.org/misc/install/icat.server-${icat_server_version}-distro.zip">
+                    <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
                         dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${icatDB}
-                        glassfish=${installdir.dos}/glassfish4
-                        port=4848
-                    </text>
-                </writeFile>
-                <copyFile destination="${installdir}/icat.server/icat.properties" origin="${installdir}/icat.server/icat.properties.example">
-                    <ruleList>
-                        <fileExists negate="1" path="${installdir}/icat.server/icat.properties"/>
-                    </ruleList>
-                </copyFile>
+                    </setupProperties>
+                </prepare>
                 <propertiesFileSet>
                     <file>${installdir}/icat.server/icat.properties</file>
                     <key>rootUserNames</key>
@@ -1024,21 +971,10 @@
                     <programArguments>${installdir.dos}/icat.server/setup -v install --binDir=${user_home_directory}/bin</programArguments>
                     <progressText>Deploying ICAT Server</progressText>
                     <onErrorActionList>
-                        <throwError text="${program_stdout}${program_stderr}"/>
+                        <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
+                        <exit exitCode="1"/>
                     </onErrorActionList>
                 </runProgram>
-
-                <!-- This restart should not be necessary
-                <runProgram>
-                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
-                    <programArguments>disable icat.server-${icat_server_version}</programArguments>
-                    <progressText>Disable icat.server</progressText>
-                </runProgram>
-                <runProgram>
-                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
-                    <programArguments>enable icat.server-${icat_server_version}</programArguments>
-                    <progressText>Enable icat.server</progressText>
-                </runProgram> -->
             </postInstallationActionList>
             <preInstallationActionList>
                 <runProgram>
@@ -1048,21 +984,227 @@
                     <progressText>Undeploy icat server</progressText>
                     <showMessageOnError>0</showMessageOnError>
                 </runProgram>
+                <runProgram>
+                    <abortOnError>0</abortOnError>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>undeploy ids.server-${ids_server_version}</programArguments>
+                    <progressText>Undeploy IDS server</progressText>
+                    <showMessageOnError>0</showMessageOnError>
+                </runProgram>
             </preInstallationActionList>
         </component>
         <component>
+            <name>ids_storage_file</name>
+            <description>IDS storage_file plugin</description>
+            <canBeEdited>0</canBeEdited>
+            <selected>0</selected>
+            <show>0</show>
+            <parameterList>
+                <parameterGroup>
+                    <name>StorageFileConfiguration</name>
+                    <title>IDS StorageFile Plugin Configuration</title>
+                    <explanation>The storage_file plugin for the IDS server can use two storage areas where the main one acts as a cache for the
+                        archive.
+                    </explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <directoryParameter name="mainDir" description="directory for IDS main storage" explanation="" value="${mainDir}" default="" allowEmptyValue="0" width="60">
+                            <mustBeWritable>1</mustBeWritable>
+                            <mustExist>0</mustExist>
+                        </directoryParameter>
+                        <directoryParameter name="archiveDir" description="directory for IDS archive storage" explanation="" value="${archiveDir}" default="" allowEmptyValue="0" width="60">
+                            <mustBeWritable>1</mustBeWritable>
+                            <mustExist>0</mustExist>
+                        </directoryParameter>
+                    </parameterList>
+                    <preShowPageActionList>
+                        <if>
+                            <actionList>
+                                <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.main.properties" key="dir" variable="mainDir"/>
+                                <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.archive.properties" key="dir" variable="archiveDir"/>
+                            </actionList>
+                            <conditionRuleList>
+                                <fileExists path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
+                                <fileExists path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                            </conditionRuleList>
+                            <elseActionList>
+                                <setInstallerVariable name="mainDir" value="${user_home_directory}/ids/main"/>
+                                <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
+                            </elseActionList>
+                        </if>
+                    </preShowPageActionList>
+                </parameterGroup>
+            </parameterList>
+            <postInstallationActionList>
+                <if>
+                    <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
+                    <actionList>
+                        <setInstallerVariable name="url" value="http://www.icatproject.org/mvn/repo/org/icatproject/ids.storage_file/${ids_storage_file_version}/ids.storage_file-${ids_storage_file_version}-distro.zip"/>
+                        <generateRandomValue length="5" variable="tname"/>
+                        <logMessage text="Fetching distro ${url}"/>
+                        <httpGet filename="${system_temp_directory}/${tname}" progressText="Fetching distro for ids.storage_file" url="${url}"/>
+                        <unzip destinationDirectory="${installdir}" zipFile="${system_temp_directory}/${tname}"/>
+                        <writeFile path="${installdir}/ids.storage_file/ids.storage_file-setup.properties">
+                            <text>glassfish=${installdir.dos}/glassfish4
+                                port=4848
+                            </text>
+                        </writeFile>
+                        <copyFile>
+                            <destination>${installdir}/ids.storage_file/ids.storage_file.main.properties</destination>
+                            <origin>${installdir}/ids.storage_file/ids.storage_file.main.properties.example</origin>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
+                            </ruleList>
+                        </copyFile>
+                        <copyFile>
+                            <destination>${installdir}/ids.storage_file/ids.storage_file.archive.properties</destination>
+                            <origin>${installdir}/ids.storage_file/ids.storage_file.archive.properties.example</origin>
+                            <ruleList>
+                                <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                            </ruleList>
+                        </copyFile>
+                    </actionList>
+                    <conditionRuleList>
+                        <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
+                        <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                        <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.main.properties.example"/>
+                        <fileExists negate="1" path="${installdir}/ids.storage_file/ids.storage_file.archive.properties.example"/>
+                    </conditionRuleList>
+                </if>
+                <propertiesFileSet file="${installdir}/ids.storage_file/ids.storage_file.main.properties" key="dir" value="${mainDir}"/>
+                <propertiesFileSet file="${installdir}/ids.storage_file/ids.storage_file.archive.properties" key="dir" value="${archiveDir}"/>
+                <createDirectory path="${mainDir}"/>
+                <createDirectory path="${archiveDir}"/>
+                <setup component="ids.storage_file" msg="Deploying IDS storage_file plugin"/>
+            </postInstallationActionList>
+        </component>
+        <component>
             <name>ids_server</name>
-            <description>The IDS server</description>
+            <description>The IDS</description>
             <canBeEdited>1</canBeEdited>
-            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
+            <detailedDescription>This is the ids.server to upload and download data files which will be installed using the "storage file" plugin.
+            </detailedDescription>
             <selected>1</selected>
             <show>1</show>
+            <componentSelectionValidationActionList>
+                <componentSelection deselect="" select="ids_storage_file"/>
+            </componentSelectionValidationActionList>
+            <parameterList>
+                <parameterGroup>
+                    <name>IDSServerConfiguration</name>
+                    <title>IDS Server Configuration</title>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter name="ids_reader">
+                            <description>reader</description>
+                            <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted to read all
+                                datasets, datafiles, investigations and facilities. For example: db username db/root password password.
+                            </explanation>
+                            <value>${idsReader}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                        <stringParameter name="ids_rootUserNames">
+                            <description>rootUserNames</description>
+                            <explanation>A space separated list of user names allowed to make the getServiceStatus call.</explanation>
+                            <value>${ids_rootUserNames}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                        <stringParameter name="ids_cache_dir">
+                            <description>cache.dir</description>
+                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
+                                files.</explanation>
+                            <value></value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>60</width>
+                        </stringParameter>
+                        <stringParameter name="ids_filesCheck_parallelCount">
+                            <description>filesCheck.parallelCount</description>
+                            <explanation> If non zero then the readability of the data will be checked in batches of this size.</explanation>
+                            <value>${ids_filesCheck_parallelCount}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>10</width>
+                        </stringParameter>
+                        <stringParameter name="ids_filesCheck_gapSeconds">
+                            <description>filesCheck.gapSeconds</description>
+                            <explanation>The number of seconds to wait before launching a check of the next batch of datafiles or datasets.
+                            </explanation>
+                            <value>${ids_filesCheck_gapSeconds}</value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>10</width>
+                        </stringParameter>
+                    </parameterList>
+                    <preShowPageActionList>
+                        <if>
+                            <actionList>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="reader" variable="ids_reader"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="rootUserNames" variable="ids_rootUserNames"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="cache.dir" variable="ids_cache_dir"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" variable="ids_filesCheck_parallelCount"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" variable="ids_filesCheck_gapSeconds"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
+                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
+                            </actionList>
+                            <conditionRuleList>
+                                <fileExists path="${installdir}/ids.server/ids.properties"/>
+                            </conditionRuleList>
+                            <elseActionList>
+                                <setInstallerVariable name="ids_reader" value="anon"/>
+                                <setInstallerVariable name="ids_rootUserNames" value="anon/anon"/>
+                                <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
+                                <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
+                                <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
+                                <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
+                                <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
+                            </elseActionList>
+                        </if>
+                    </preShowPageActionList>
+                </parameterGroup>
+            </parameterList>
+            <postInstallationActionList>
+                <prepare component="ids.server" componentVersion="${ids_server_version}" propertyRoot="ids" setupProperties="libraries=ids.storage_file*.jar">
+                    <url></url>
+                </prepare>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="reader" value="${ids_reader}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="rootUserNames" value="${ids_rootUserNames}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="cache.dir" value="${ids_cache_dir}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" value="${ids_filesCheck_parallelCount}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" value="${ids_filesCheck_gapSeconds}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" value="${ids_filesCheck_lastIdFile}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" value="${ids_filesCheck_errorLog}"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
+                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
+                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
+                        "${ids_cache_dir}".strip()))'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <createDirectory path="${dir}"/>
+                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
+                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
+                        os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <createDirectory path="${dir}"/>
+                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
+                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
+                        os.path.dirname("${ids_filesCheck_errorLog}".strip())))'</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <createDirectory path="${dir}"/>
+                <setup component="ids.server" msg="Deploying IDS Server"/>
+            </postInstallationActionList>
         </component>
         <component>
             <name>topcat</name>
             <description>TopCAT</description>
             <canBeEdited>1</canBeEdited>
-            <detailedDescription>This is the server to upload and download data files.</detailedDescription>
+            <detailedDescription>To browse, download from and upload to multiple ICAT servers.</detailedDescription>
             <selected>1</selected>
             <show>1</show>
             <componentSelectionValidationActionList>
@@ -1072,29 +1214,135 @@
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
-        </component>
-        <component>
-            <name>ijp_server</name>
-            <description>The IJP server</description>
-            <canBeEdited>1</canBeEdited>
-            <detailedDescription>This is the server to permit submission of batch and interactive jobs.</detailedDescription>
-            <selected>1</selected>
-            <show>1</show>
-            <componentSelectionValidationActionList>
-                <throwError text="IJP cannot be installed without the IDS.">
+            <parameterList>
+                <parameterGroup>
+                    <name>TopCATConfiguration</name>
+                    <title>TopCAT Configuration</title>
+                    <explanation>TopCAT Configuration</explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter name="topcatDB" value="topcat" default="topcat">
+                            <description>Name of MySQL Database to use for TopCAT</description>
+                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
+                                required tables to it.
+                            </explanation>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                        <passwordParameter>
+                            <name>topcat_adminPassword</name>
+                            <description>Password</description>
+                            <explanation>Password for the TopCAT admin interface</explanation>
+                            <value></value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <descriptionRetype>Retype password</descriptionRetype>
+                            <width>30</width>
+                            <validationActionList>
+                                <throwError text="The password must contain at least one lower case letter, one upper case letter and a digit and be at least six characters long.">
+                                    <ruleList>
+                                        <regExMatch>
+                                            <logic>does_not_match</logic>
+                                            <pattern>^(?=(?:\D*\d))(?=(?:[^a-z]*[a-z]))(?=(?:[^A-Z]*[A-Z])).{6,}$</pattern>
+                                            <text>${topcat_adminPassword}</text>
+                                        </regExMatch>
+                                    </ruleList>
+                                </throwError>
+                            </validationActionList>
+                        </passwordParameter>
+                    </parameterList>
                     <ruleList>
-                        <isFalse value="${component(ids_server).selected}"/>
+                        <fileExists negate="1" path="${installdir}/topcat/topcat-setup.properties"/>
                     </ruleList>
-                </throwError>
-            </componentSelectionValidationActionList>
+                </parameterGroup>
+            </parameterList>
+            <postInstallationActionList>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${topcatDB}.* to '${mysql_username}'@'localhost'"</programArguments>
+                    <progressText>Configuring TopCAT database</progressText>
+                </runProgram>
+                <runProgram>
+                    <program>${mysql_executable}</program>
+                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${topcatDB}"</programArguments>
+                    <progressText>Configuring TopCAT database</progressText>
+                    <onErrorActionList>
+                        <throwError>
+                            <text>${program_stderr}</text>
+                        </throwError>
+                    </onErrorActionList>
+                </runProgram>
+                <prepare component="topcat" componentVersion="${topcat_version}" propertyRoot="topcat" url="http://www.icatproject.org/mvn/repo/org/icatproject/TopCAT/${topcat_version}/TopCAT-${topcat_version}-distro.zip">
+                    <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${topcatDB}
+                        topcatUrlRoot=
+                        topcatAdminUrlRoot=
+                        adminUsername=topcatadmin
+                        adminPassword=${topcat_adminPassword}
+                    </setupProperties>
+                </prepare>
+                <setup component="topcat" msg="Deploying TopCAT"/>
+                <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="new">
+                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "select SEQ_COUNT from SEQUENCE"</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <if>
+                    <actionList>
+                        <runProgram program="${mysql_executable}">
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into TOPCAT_ICAT_SERVER(ID, DOWNLOAD_PLUGIN_NAME, DOWNLOAD_SERVICE_URL, DOWNLOAD_TYPE, NAME, SERVER_URL, VERSION, ALLOW_UPLOAD, ALLOW_CREATE_DATASET) values (1, 'ids', 'https://${machine_fqdn}:8181', 'archived', '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v44', 1,1)"</programArguments>
+                        </runProgram>
+                        <setInstallerVariable name="n" value="0"/>
+                        <foreach>
+                            <values>db ldap anon simple</values>
+                            <variables>authn</variables>
+                            <actionList>
+                                <continue>
+                                    <ruleList>
+                                        <isFalse>
+                                            <value>${component(authn).component(authn_${authn}).selected}</value>
+                                        </isFalse>
+                                    </ruleList>
+                                </continue>
+                                <mathExpression text="${n} + 1" variable="n"/>
+                                <if>
+                                    <actionList>
+                                        <setInstallerVariable name="plugin" value="uk.ac.stfc.topcat.gwt.client.authentication.DefaultAuthenticationPlugin"/>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <compareText logic="equals" negate="1" text="${authn}" value="anon"/>
+                                    </conditionRuleList>
+                                    <elseActionList>
+                                        <setInstallerVariable name="plugin" value="uk.ac.stfc.topcat.gwt.client.authentication.AnonymousAuthenticationPlugin"/>
+                                    </elseActionList>
+                                </if>
+                                <runProgram program="${mysql_executable}">
+                                    <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into TOPCAT_ICAT_AUTHENTICATION(ID, AUTHENTICATION_TYPE, DISPLAY_NAME, PLUGIN_NAME, SERVER_ID) values (${n}, '${authn}', '${authn}', '${plugin}', 1)"</programArguments>
+                                </runProgram>
+                            </actionList>
+                        </foreach>
+                        <runProgram program="${mysql_executable}">
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "update SEQUENCE set SEQ_COUNT = ${n}"</programArguments>
+                        </runProgram>
+                    </actionList>
+                    <conditionRuleList>
+                        <compareValues logic="equals" value1="${new}" value2="0"/>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <showWarning text="The TopCAT database has already been setup so will not be modified."/>
+                    </elseActionList>
+                </if>
+            </postInstallationActionList>
         </component>
     </componentList>
     <initializationActionList>
-        <setInstallerVariable name="authn_db_version" value="1.1.1"/>
+        <setInstallerVariable name="authn_db_version" value="1.1.2"/>
         <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
         <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
         <setInstallerVariable name="authn_anon_version" value="1.0.2"/>
         <setInstallerVariable name="icat_server_version" value="4.4.0"/>
+        <setInstallerVariable name="ids_storage_file_version" value="1.3.0"/>
+        <setInstallerVariable name="ids_server_version" value="1.3.0"/>
+        <setInstallerVariable name="topcat_version" value="1.12.0"/>
         <locate>
             <command>python</command>
             <variable>python_executable</variable>
@@ -1153,9 +1401,6 @@
             </ruleList>
         </throwError>
     </initializationActionList>
-    <postInstallationActionList>
-        <addDirectoriesToUninstaller files="${installdir}/distro/"/>
-    </postInstallationActionList>
     <postUninstallationActionList>
         <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server" variables="comp">
             <actionList>
