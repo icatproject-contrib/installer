@@ -2,8 +2,8 @@
     <shortName>icat</shortName>
     <fullName>ICAT</fullName>
     <version>1.0</version>
-
-    <!-- <readmeFile>README.txt</readmeFile> <licenseFile>LICENSE.txt</licenseFile> -->
+    <readmeFile>README.txt</readmeFile>
+    <licenseFile>LICENSE.txt</licenseFile>
     <leftImage>logo.gif</leftImage>
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
@@ -444,7 +444,7 @@
                                             <value>${password0}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>106</width>
+                                            <width>119</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -470,7 +470,7 @@
                                             <value>${password1}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>106</width>
+                                            <width>119</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -496,7 +496,7 @@
                                             <value>${password2}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>106</width>
+                                            <width>119</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -522,7 +522,7 @@
                                             <value>${password3}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>106</width>
+                                            <width>119</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -548,7 +548,7 @@
                                             <value>${password4}</value>
                                             <default></default>
                                             <allowEmptyValue>1</allowEmptyValue>
-                                            <width>106</width>
+                                            <width>119</width>
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
@@ -1119,7 +1119,8 @@
                         <stringParameter name="ids_cache_dir">
                             <description>cache.dir</description>
                             <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
-                                files.</explanation>
+                                files.
+                            </explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1184,17 +1185,20 @@
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
                 <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
                     <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        "${ids_cache_dir}".strip()))'</execArgs>
+                        "${ids_cache_dir}".strip()))'
+                    </execArgs>
                 </setInstallerVariableFromScriptOutput>
                 <createDirectory path="${dir}"/>
                 <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
                     <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'</execArgs>
+                        os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'
+                    </execArgs>
                 </setInstallerVariableFromScriptOutput>
                 <createDirectory path="${dir}"/>
                 <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
                     <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        os.path.dirname("${ids_filesCheck_errorLog}".strip())))'</execArgs>
+                        os.path.dirname("${ids_filesCheck_errorLog}".strip())))'
+                    </execArgs>
                 </setInstallerVariableFromScriptOutput>
                 <createDirectory path="${dir}"/>
                 <setup component="ids.server" msg="Deploying IDS Server"/>
@@ -1260,12 +1264,14 @@
             <postInstallationActionList>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${topcatDB}.* to '${mysql_username}'@'localhost'"</programArguments>
+                    <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${topcatDB}.* to
+                        '${mysql_username}'@'localhost'"</programArguments>
                     <progressText>Configuring TopCAT database</progressText>
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${topcatDB}"</programArguments>
+                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${topcatDB}"
+                    </programArguments>
                     <progressText>Configuring TopCAT database</progressText>
                     <onErrorActionList>
                         <throwError>
@@ -1289,7 +1295,10 @@
                 <if>
                     <actionList>
                         <runProgram program="${mysql_executable}">
-                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into TOPCAT_ICAT_SERVER(ID, DOWNLOAD_PLUGIN_NAME, DOWNLOAD_SERVICE_URL, DOWNLOAD_TYPE, NAME, SERVER_URL, VERSION, ALLOW_UPLOAD, ALLOW_CREATE_DATASET) values (1, 'ids', 'https://${machine_fqdn}:8181', 'archived', '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v44', 1,1)"</programArguments>
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
+                                TOPCAT_ICAT_SERVER(ID, DOWNLOAD_PLUGIN_NAME, DOWNLOAD_SERVICE_URL, DOWNLOAD_TYPE, NAME, SERVER_URL, VERSION,
+                                ALLOW_UPLOAD, ALLOW_CREATE_DATASET) values (1, 'ids', 'https://${machine_fqdn}:8181', 'archived',
+                                '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v43', 1,1)"</programArguments>
                         </runProgram>
                         <setInstallerVariable name="n" value="0"/>
                         <foreach>
@@ -1316,12 +1325,15 @@
                                     </elseActionList>
                                 </if>
                                 <runProgram program="${mysql_executable}">
-                                    <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into TOPCAT_ICAT_AUTHENTICATION(ID, AUTHENTICATION_TYPE, DISPLAY_NAME, PLUGIN_NAME, SERVER_ID) values (${n}, '${authn}', '${authn}', '${plugin}', 1)"</programArguments>
+                                    <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
+                                        TOPCAT_ICAT_AUTHENTICATION(ID, AUTHENTICATION_TYPE, DISPLAY_NAME, PLUGIN_NAME, SERVER_ID) values (${n},
+                                        '${authn}', '${authn}', '${plugin}', 1)"</programArguments>
                                 </runProgram>
                             </actionList>
                         </foreach>
                         <runProgram program="${mysql_executable}">
-                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "update SEQUENCE set SEQ_COUNT = ${n}"</programArguments>
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "update SEQUENCE set SEQ_COUNT =
+                                ${n}"</programArguments>
                         </runProgram>
                     </actionList>
                     <conditionRuleList>
@@ -1402,9 +1414,10 @@
         </throwError>
     </initializationActionList>
     <postUninstallationActionList>
-        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server" variables="comp">
+        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server ids.storage_file ids.server topcat" variables="comp">
             <actionList>
                 <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*"/>
+                <deleteFile path="${installdir}/${comp}/*-setup.properties"/>
             </actionList>
         </foreach>
     </postUninstallationActionList>
@@ -1412,9 +1425,9 @@
     <enableRollback>0</enableRollback>
     <enableTimestamp>1</enableTimestamp>
     <height>800</height>
-    <installationLogFile>${system_temp_directory}/${project.shortName}-installation.log</installationLogFile>
+    <installationLogFile>${installdir}/${project.shortName}-installation.log</installationLogFile>
     <saveRelativePaths>1</saveRelativePaths>
-    <uninstallationLogFile>${system_temp_directory}/${project.shortName}-uninstallation.log</uninstallationLogFile>
+    <uninstallationLogFile>${installdir}/${project.shortName}-uninstallation.log</uninstallationLogFile>
     <vendor>ICAT Collaboration</vendor>
     <width>1000</width>
     <parameterList>
