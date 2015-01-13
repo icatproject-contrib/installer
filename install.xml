@@ -611,10 +611,8 @@
                             <actionList>
                                 <if>
                                     <actionList>
-                                        <setInstallerVariableFromScriptOutput>
-                                            <exec>${python_executable}</exec>
+                                        <setInstallerVariableFromScriptOutput abortOnError="0" exec="${python_executable}" name="password${n}">
                                             <execArgs>-c "import crypt; print crypt.crypt('${password${n}}')"</execArgs>
-                                            <name>password${n}</name>
                                             <ruleList>
                                                 <regExMatch>
                                                     <logic>matches</logic>
@@ -1424,7 +1422,7 @@
     <allowComponentSelection>1</allowComponentSelection>
     <enableRollback>0</enableRollback>
     <enableTimestamp>1</enableTimestamp>
-    <height>800</height>
+    <height>700</height>
     <installationLogFile>${installdir}/${project.shortName}-installation.log</installationLogFile>
     <saveRelativePaths>1</saveRelativePaths>
     <uninstallationLogFile>${installdir}/${project.shortName}-uninstallation.log</uninstallationLogFile>

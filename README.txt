@@ -9,12 +9,12 @@ There is an uninstall program in the installation directory which
 should uninstall everything except for property files for each 
 component.
 
-The installation directory has a a directory for each component. 
+The installation directory has a directory for each component. 
 To reconfigure a single component go to the directory for that 
 component (other than glassfish), edit the appropriate properties file
 and run, in the case of unix, "python setup install -v"
 
-To permit complete reconfigutaion of a component simply delete the
+To permit complete reconfiguration of a component simply delete the
 directory for that component.
 
 To update a component unzip the distribution into the installation 
