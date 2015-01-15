@@ -554,48 +554,52 @@
                                 </parameterGroup>
                             </parameterList>
                             <preShowPageActionList>
-                                <setInstallerVariable name="n" value="0"/>
-                                <while>
-                                    <actionList>
-                                        <setInstallerVariable name="user${n}" value=""/>
-                                        <setInstallerVariable name="password${n}" value=""/>
-                                        <mathExpression text="${n} + 1" variable="n"/>
-                                    </actionList>
-                                    <conditionRuleList>
-                                        <compareValues>
-                                            <logic>less</logic>
-                                            <value1>${n}</value1>
-                                            <value2>5</value2>
-                                        </compareValues>
-                                    </conditionRuleList>
-                                </while>
                                 <if>
                                     <actionList>
-                                        <propertiesFileGet>
-                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
-                                            <key>user.list</key>
-                                            <variable>user_list</variable>
-                                        </propertiesFileGet>
                                         <setInstallerVariable name="n" value="0"/>
-                                        <foreach>
-                                            <values>${user_list}</values>
-                                            <variables>name</variables>
+                                        <while>
                                             <actionList>
-                                                <setInstallerVariable name="user${n}" value="${name}"/>
-                                                <propertiesFileGet>
-                                                    <file>${installdir}/authn_simple/authn_simple.properties</file>
-                                                    <key>user.${name}.password</key>
-                                                    <variable>upw</variable>
-                                                </propertiesFileGet>
-                                                <setInstallerVariable name="password${n}" value="${upw}"/>
+                                                <setInstallerVariable name="user${n}" value=""/>
+                                                <setInstallerVariable name="password${n}" value=""/>
                                                 <mathExpression text="${n} + 1" variable="n"/>
                                             </actionList>
-                                        </foreach>
+                                            <conditionRuleList>
+                                                <compareValues logic="less" value1="${n}" value2="5"/>
+                                            </conditionRuleList>
+                                        </while>
+                                        <if>
+                                            <actionList>
+                                                <propertiesFileGet>
+                                                    <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                                    <key>user.list</key>
+                                                    <variable>user_list</variable>
+                                                </propertiesFileGet>
+                                                <setInstallerVariable name="n" value="0"/>
+                                                <foreach>
+                                                    <values>${user_list}</values>
+                                                    <variables>name</variables>
+                                                    <actionList>
+                                                        <setInstallerVariable name="user${n}" value="${name}"/>
+                                                        <propertiesFileGet>
+                                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                                            <key>user.${name}.password</key>
+                                                            <variable>upw</variable>
+                                                        </propertiesFileGet>
+                                                        <setInstallerVariable name="password${n}" value="${upw}"/>
+                                                        <mathExpression text="${n} + 1" variable="n"/>
+                                                    </actionList>
+                                                </foreach>
+                                            </actionList>
+                                            <conditionRuleList>
+                                                <fileExists>
+                                                    <path>${installdir}/authn_simple/authn_simple.properties</path>
+                                                </fileExists>
+                                            </conditionRuleList>
+                                        </if>
+                                        <setInstallerVariable name="authnSimplePagesInited" value="1"/>
                                     </actionList>
                                     <conditionRuleList>
-                                        <fileExists>
-                                            <path>${installdir}/authn_simple/authn_simple.properties</path>
-                                        </fileExists>
+                                        <compareValues logic="equals" negate="1" value1="${authnSimplePagesInited}" value2="1"/>
                                     </conditionRuleList>
                                 </if>
                             </preShowPageActionList>
@@ -611,8 +615,13 @@
                             <actionList>
                                 <if>
                                     <actionList>
+                                        <setInstallerVariable name="tpass" value="${password${n}}"/>
                                         <setInstallerVariableFromScriptOutput abortOnError="0" exec="${python_executable}" name="password${n}">
-                                            <execArgs>-c "import crypt; print crypt.crypt('${password${n}}')"</execArgs>
+                                            <execArgs>-c "import crypt; print crypt.crypt('${tpass}')"</execArgs>
+                                            <showMessageOnError>0</showMessageOnError>
+                                            <onErrorActionList>
+                                                <setInstallerVariable name="password${n}" value="${tpass}"/>
+                                            </onErrorActionList>
                                             <ruleList>
                                                 <regExMatch>
                                                     <logic>matches</logic>
@@ -630,17 +639,13 @@
                                         <setInstallerVariable name="user_list" value="${user_list} ${user${n}}"/>
                                     </actionList>
                                     <conditionRuleList>
-                                        <compareText logic="equals" negate="1" text="${user{$n}}" value=""/>
+                                        <compareText logic="equals" negate="1" text="${user${n}}" value=""/>
                                     </conditionRuleList>
                                 </if>
                                 <mathExpression text="${n} + 1" variable="n"/>
                             </actionList>
                             <conditionRuleList>
-                                <compareValues>
-                                    <logic>less</logic>
-                                    <value1>${n}</value1>
-                                    <value2>5</value2>
-                                </compareValues>
+                                <compareValues logic="less" value1="${n}" value2="5"/>
                             </conditionRuleList>
                         </while>
                         <propertiesFileSet>
@@ -719,26 +724,34 @@
                             <preShowPageActionList>
                                 <if>
                                     <actionList>
-                                        <foreach>
-                                            <values>provider_url security_principal case</values>
-                                            <variables>prop</variables>
+                                        <if>
                                             <actionList>
-                                                <propertiesFileGet>
-                                                    <file>${installdir}/authn_ldap/authn_ldap.properties</file>
-                                                    <key>${prop}</key>
-                                                    <variable>${prop}</variable>
-                                                </propertiesFileGet>
+                                                <foreach>
+                                                    <values>provider_url security_principal case</values>
+                                                    <variables>prop</variables>
+                                                    <actionList>
+                                                        <propertiesFileGet>
+                                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                                            <key>${prop}</key>
+                                                            <variable>${prop}</variable>
+                                                        </propertiesFileGet>
+                                                    </actionList>
+                                                </foreach>
                                             </actionList>
-                                        </foreach>
+                                            <conditionRuleList>
+                                                <fileExists path="${installdir}/authn_ldap/authn_ldap.properties"/>
+                                            </conditionRuleList>
+                                            <elseActionList>
+                                                <setInstallerVariable name="provider_url" value=""/>
+                                                <setInstallerVariable name="security_principal" value=""/>
+                                                <setInstallerVariable name="case" value="lower"/>
+                                            </elseActionList>
+                                        </if>
+                                        <setInstallerVariable name="authnLdapPagesInited" value="1"/>
                                     </actionList>
                                     <conditionRuleList>
-                                        <fileExists path="${installdir}/authn_ldap/authn_ldap.properties"/>
+                                        <compareValues logic="equals" negate="1" value1="${authnLdapPagesInited}" value2="1"/>
                                     </conditionRuleList>
-                                    <elseActionList>
-                                        <setInstallerVariable name="provider_url" value=""/>
-                                        <setInstallerVariable name="security_principal" value=""/>
-                                        <setInstallerVariable name="case" value="lower"/>
-                                    </elseActionList>
                                 </if>
                             </preShowPageActionList>
                         </parameterGroup>
@@ -844,9 +857,8 @@
                     <parameterList>
                         <stringParameter name="icatDB" value="icat" default="icat">
                             <description>Name of MySQL Database to use for ICAT server</description>
-                            <explanation>The data base for the ICAT server will be created for you. If you use an existing database an attempt will be
-                                made to add the
-                                required tables to it.
+                            <explanation>The data base for the ICAT server will be created for you. 
+If you use an existing database an attempt will be made to add the required tables to it.
                             </explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
@@ -857,7 +869,8 @@
                         <stringParameter>
                             <name>rootUserNames</name>
                             <description>rootUserNames</description>
-                            <explanation>Users with "root" access to the ICAT server</explanation>
+                            <explanation>Space separated list of users with "root" access to the ICAT server; for example: simple/root. 
+The prefix must correspond to one of the authenticators you have selected.</explanation>
                             <value>${rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -877,27 +890,35 @@
                     <preShowPageActionList>
                         <if>
                             <actionList>
-                                <foreach>
-                                    <values>rootUserNames maxEntities</values>
-                                    <variables>prop</variables>
+                                <if>
                                     <actionList>
-                                        <propertiesFileGet>
-                                            <file>${installdir}/icat.server/icat.properties</file>
-                                            <key>${prop}</key>
-                                            <variable>${prop}</variable>
-                                        </propertiesFileGet>
+                                        <foreach>
+                                            <values>rootUserNames maxEntities</values>
+                                            <variables>prop</variables>
+                                            <actionList>
+                                                <propertiesFileGet>
+                                                    <file>${installdir}/icat.server/icat.properties</file>
+                                                    <key>${prop}</key>
+                                                    <variable>${prop}</variable>
+                                                </propertiesFileGet>
+                                            </actionList>
+                                        </foreach>
                                     </actionList>
-                                </foreach>
+                                    <conditionRuleList>
+                                        <fileExists>
+                                            <path>${installdir}/icat.server/icat.properties</path>
+                                        </fileExists>
+                                    </conditionRuleList>
+                                    <elseActionList>
+                                        <setInstallerVariable name="rootUserNames" value=""/>
+                                        <setInstallerVariable name="maxEntities" value="10000"/>
+                                    </elseActionList>
+                                </if>
+                                <setInstallerVariable name="icatServerPagesInited" value="1"/>
                             </actionList>
                             <conditionRuleList>
-                                <fileExists>
-                                    <path>${installdir}/icat.server/icat.properties</path>
-                                </fileExists>
+                                <compareValues logic="equals" negate="1" value1="${icatServerPagesInited}" value2="1"/>
                             </conditionRuleList>
-                            <elseActionList>
-                                <setInstallerVariable name="rootUserNames" value=""/>
-                                <setInstallerVariable name="maxEntities" value=""/>
-                            </elseActionList>
                         </if>
                     </preShowPageActionList>
                 </parameterGroup>
@@ -978,8 +999,8 @@
                 <runProgram>
                     <abortOnError>0</abortOnError>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
-                    <programArguments>undeploy icat.server-${icat_server_version}</programArguments>
-                    <progressText>Undeploy icat server</progressText>
+                    <programArguments>undeploy topcat-${topcat_version}</programArguments>
+                    <progressText>Undeploy IDS server</progressText>
                     <showMessageOnError>0</showMessageOnError>
                 </runProgram>
                 <runProgram>
@@ -987,6 +1008,13 @@
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>undeploy ids.server-${ids_server_version}</programArguments>
                     <progressText>Undeploy IDS server</progressText>
+                    <showMessageOnError>0</showMessageOnError>
+                </runProgram>
+                <runProgram>
+                    <abortOnError>0</abortOnError>
+                    <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                    <programArguments>undeploy icat.server-${icat_server_version}</programArguments>
+                    <progressText>Undeploy icat server</progressText>
                     <showMessageOnError>0</showMessageOnError>
                 </runProgram>
             </preInstallationActionList>
@@ -1019,17 +1047,25 @@
                     <preShowPageActionList>
                         <if>
                             <actionList>
-                                <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.main.properties" key="dir" variable="mainDir"/>
-                                <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.archive.properties" key="dir" variable="archiveDir"/>
+                                <if>
+                                    <actionList>
+                                        <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.main.properties" key="dir" variable="mainDir"/>
+                                        <propertiesFileGet file="${installdir}/ids.storage_file/ids.storage_file.archive.properties" key="dir" variable="archiveDir"/>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <fileExists path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
+                                        <fileExists path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                                    </conditionRuleList>
+                                    <elseActionList>
+                                        <setInstallerVariable name="mainDir" value="${user_home_directory}/ids/main"/>
+                                        <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
+                                    </elseActionList>
+                                </if>
+                                <setInstallerVariable name="idsStorageFilePagesInited" value="1"/>
                             </actionList>
                             <conditionRuleList>
-                                <fileExists path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
-                                <fileExists path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                                <compareValues logic="equals" negate="1" value1="${idsStorageFilePagesInited}" value2="1"/>
                             </conditionRuleList>
-                            <elseActionList>
-                                <setInstallerVariable name="mainDir" value="${user_home_directory}/ids/main"/>
-                                <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
-                            </elseActionList>
                         </if>
                     </preShowPageActionList>
                 </parameterGroup>
@@ -1098,9 +1134,8 @@
                     <parameterList>
                         <stringParameter name="ids_reader">
                             <description>reader</description>
-                            <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted to read all
-                                datasets, datafiles, investigations and facilities. For example: db username db/root password password.
-                            </explanation>
+                            <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted
+to read all datasets, datafiles, investigations and facilities. For example: db username root password secret.</explanation>
                             <value>${idsReader}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1108,7 +1143,8 @@
                         </stringParameter>
                         <stringParameter name="ids_rootUserNames">
                             <description>rootUserNames</description>
-                            <explanation>A space separated list of user names allowed to make the getServiceStatus call.</explanation>
+                            <explanation>A space separated list of user names allowed to make the getServiceStatus call. For example simple/root
+where the prefix must correspond to an installed authenticator.</explanation>
                             <value>${ids_rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1116,9 +1152,7 @@
                         </stringParameter>
                         <stringParameter name="ids_cache_dir">
                             <description>cache.dir</description>
-                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
-                                files.
-                            </explanation>
+                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip files.</explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1126,7 +1160,7 @@
                         </stringParameter>
                         <stringParameter name="ids_filesCheck_parallelCount">
                             <description>filesCheck.parallelCount</description>
-                            <explanation> If non zero then the readability of the data will be checked in batches of this size.</explanation>
+                            <explanation>If non zero then the readability of the data will be checked in batches of this size.</explanation>
                             <value>${ids_filesCheck_parallelCount}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1145,26 +1179,34 @@
                     <preShowPageActionList>
                         <if>
                             <actionList>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="reader" variable="ids_reader"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="rootUserNames" variable="ids_rootUserNames"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="cache.dir" variable="ids_cache_dir"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" variable="ids_filesCheck_parallelCount"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" variable="ids_filesCheck_gapSeconds"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
-                                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
+                                <if>
+                                    <actionList>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="reader" variable="ids_reader"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="rootUserNames" variable="ids_rootUserNames"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="cache.dir" variable="ids_cache_dir"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" variable="ids_filesCheck_parallelCount"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" variable="ids_filesCheck_gapSeconds"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
+                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
+                                    </actionList>
+                                    <conditionRuleList>
+                                        <fileExists path="${installdir}/ids.server/ids.properties"/>
+                                    </conditionRuleList>
+                                    <elseActionList>
+                                        <setInstallerVariable name="ids_reader" value=""/>
+                                        <setInstallerVariable name="ids_rootUserNames" value=""/>
+                                        <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
+                                        <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
+                                        <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
+                                        <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
+                                        <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
+                                    </elseActionList>
+                                </if>
+                                <setInstallerVariable name="idsServerPagesInited" value="1"/>
                             </actionList>
                             <conditionRuleList>
-                                <fileExists path="${installdir}/ids.server/ids.properties"/>
+                                <compareValues logic="equals" negate="1" value1="${idsServerPagesInited}" value2="1"/>
                             </conditionRuleList>
-                            <elseActionList>
-                                <setInstallerVariable name="ids_reader" value="anon"/>
-                                <setInstallerVariable name="ids_rootUserNames" value="anon/anon"/>
-                                <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
-                                <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
-                                <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
-                                <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
-                                <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
-                            </elseActionList>
                         </if>
                     </preShowPageActionList>
                 </parameterGroup>
@@ -1217,25 +1259,24 @@
                 </throwError>
             </componentSelectionValidationActionList>
             <parameterList>
-                <parameterGroup>
+                <parameterGroup value="" default="">
                     <name>TopCATConfiguration</name>
                     <title>TopCAT Configuration</title>
-                    <explanation>TopCAT Configuration</explanation>
-                    <value></value>
-                    <default></default>
+                    <explanation></explanation>
                     <parameterList>
                         <stringParameter name="topcatDB" value="topcat" default="topcat">
                             <description>Name of MySQL Database to use for TopCAT</description>
-                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
-                                required tables to it.
-                            </explanation>
+                            <explanation>The database will be created for you. If you use an existing database an attempt will be made to add the
+required tables to it.</explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
                         </stringParameter>
                         <passwordParameter>
                             <name>topcat_adminPassword</name>
                             <description>Password</description>
-                            <explanation>Password for the TopCAT admin interface</explanation>
+                            <explanation>Password for the TopCAT admin interface. The username will be admin. The password must contain at least
+one lower case letter, one upper case letter and a digit and be at least six characters long as this provides
+access via a web browser and so should be more secure.</explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1282,7 +1323,7 @@
                         dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${topcatDB}
                         topcatUrlRoot=
                         topcatAdminUrlRoot=
-                        adminUsername=topcatadmin
+                        adminUsername=admin
                         adminPassword=${topcat_adminPassword}
                     </setupProperties>
                 </prepare>
@@ -1449,19 +1490,6 @@
             <value></value>
             <default></default>
             <parameterList>
-                <stringParameter>
-                    <name>glassfish_user</name>
-                    <description>Username</description>
-                    <explanation>Who to run glassfish as. The account will be created if necessary.</explanation>
-                    <value>glassfish</value>
-                    <default>glassfish</default>
-                    <allowEmptyValue>0</allowEmptyValue>
-                    <width>20</width>
-                    <ruleList>
-                        <isTrue value="${installer_is_root_install}"/>
-                        <isFalse value="${glassfish_installed}"/>
-                    </ruleList>
-                </stringParameter>
                 <passwordParameter>
                     <name>mysql_root_password</name>
                     <description>Password</description>
