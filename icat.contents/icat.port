@@ -1,0 +1,85 @@
+# Version of file format
+1.0
+
+User (name:0, fullName:1)
+"db/tr", "Professor Tap Root"
+"db/minion", "Mr Minion"
+"db/fred","Professor Fred Brown"
+
+Facility ( name:0, daysUntilRelease:1, createId:2, createTime:3)
+"Demo facility", 90, "Zorro", 1920-05-16T16:58:26.12Z
+
+InvestigationType (facility(name:0), name:1)
+"Demo facility", "atype"
+"Demo facility", "btype"
+
+ParameterType(facility(name:0),name:1, units:2, minimumNumericValue:3, applicableToInvestigation:4, applicableToDataset:5, applicableToDatafile:6 valueType:7)
+"Demo facility", "temp", "degrees Kelvin", 73.4, true, true, true, NUMERIC
+"Demo facility", "pressure", "kPa", 73, null, true, true, numERIC
+"Demo facility", "colour", "name", null, true,true, true, STRING
+"Demo facility", "current", "amps", null, true,true, true, NUMERIC
+"Demo facility", "birthday", "date", null, true,true, true, DATE_AND_TIME
+
+Investigation(facility(name:0), name:1, visitId:2, type(facility(name:0), name:3),title:4,startDate:5,endDate:6)
+"Demo facility", "expt1", "zero", "atype", "a title at the beginning", 2010-01-01T00:00:00Z, 2010-12-31T23:59:59Z
+"Demo facility", "expt1", "one", "atype", "a title in the middle",2011-01-01T00:00:00Z, 2011-12-31T23:59:59Z
+"Demo facility", "expt1", "two", "atype", "a title at the end",2012-01-01T00:00:00Z, 2012-12-31T23:59:59Z
+
+InvestigationUser(investigation(facility(name:0), name:1, visitId:2),user(name:3))
+"Demo facility", "expt1", "zero", "db/tr"
+"Demo facility", "expt1", "one", "db/tr"
+"Demo facility", "expt1", "two", "db/minion"
+"Demo facility", "expt1", "one", "db/minion"
+
+SampleType(facility(name:0), name:1, molecularFormula:2, safetyInformation:3)
+"Demo facility", "diamond", "C", "fairly harmless"
+"Demo facility", "graphite", "C", "bit messy"
+"Demo facility", "rust", "Fe3O4", "messy"
+
+Sample(investigation(facility(name:0), name:1, visitId:2), type(facility(name:0), name:3, molecularFormula:4), name:5)
+"Demo facility", "expt1", "one", "diamond", "C", "Koh-I-Noor"
+"Demo facility", "expt1", "one", "rust",  "Fe3O4", "Ford Anglia"
+
+InvestigationParameter(investigation(facility(name:0), name:1, visitId:2), type(facility(name:0), name:3 , units:4),stringValue:5)
+"Demo facility", "expt1", "one", "colour" , "name", "green"
+
+DatasetType(facility(name:0), name:1)
+"Demo facility", "calibration"
+
+Dataset (investigation(facility(name:0), name:1, visitId:2) , name:3, type(facility(name:0), name:4), complete:5, startDate:6, endDate:7 sample(investigation(facility(name:0), name:1, visitId:2), name:8), description:9)
+"Demo facility", "expt1", "one", "ds1", "calibration", true,  2014-05-16T16:58:26.12+12:30, 2014-05-16T16:58:26.12+12:30, "Koh-I-Noor", "alpha"
+"Demo facility", "expt1", "one", "ds2", "calibration", null,  2014-05-16T06:05:26.12Z, 2014-05-16T06:07:26.12+12:30,"Ford Anglia", "beta"
+"Demo facility", "expt1", "one", "ds3", "calibration", False, 2014-05-16T06:09:26.12, 2014-05-16T06:15:26.12, null, "gamma"
+"Demo facility", "expt1", "two", "ds3", "calibration", False, 2014-05-16T06:20:26.12, 2014-05-16T06:21:26.12, null, "delta"
+"Demo facility", "expt1", "two", "ds4", "calibration", False, 2014-05-16T06:31:26.12, 2014-05-16T06:32:26.12, null, "epsilon"
+
+DatasetParameter(dataset(investigation(facility(name:0), name:1, visitId:2) , name:3), type(facility(name:0), name:4 , units:5),stringValue:6, numericValue:7, dateTimeValue:8)
+"Demo facility", "expt1", "one", "ds3", "colour" , "name", "green", null, null
+"Demo facility", "expt1", "one", "ds3", "birthday", "date", null, null, 2014-05-16T16:58:26.12Z
+"Demo facility", "expt1", "one", "ds3", "current" , "amps", null, 150, null
+
+Datafile(dataset(investigation(facility(name:0), name:1, visitId:2), name:3), name:4, fileSize:5)
+"Demo facility", "expt1", "one", "ds2", "df1", 12345
+"Demo facility", "expt1", "one", "ds2", "df2", 12345
+"Demo facility", "expt1", "one", "ds2", "df3", 12345
+
+Application(facility(name:0), name:1, version:2)
+"Demo facility", "aprog", "1.2.3"
+"Demo facility", "aprog", "1.2.6"
+
+DataCollection(?:0)
+"a"
+"b"
+"c"
+
+DataCollectionDatafile(datafile(dataset(investigation(facility(name:0), name:1, visitId:2), name:3), name:4), dataCollection(?:5))
+"Demo facility", "expt1", "one", "ds2", "df1",  "a"
+"Demo facility", "expt1", "one", "ds2", "df2",  "b"
+
+Job(application(facility(name:0), name:1, version:2), inputDataCollection(?:3), outputDataCollection(?:4))
+"Demo facility", "aprog", "1.2.3", "a", "b"
+
+
+
+
+

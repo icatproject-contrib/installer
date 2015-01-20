@@ -217,9 +217,10 @@
                     <command>keytool</command>
                     <variable>keytool_executable</variable>
                 </locate>
+                <dirName path="${java_executable}" variable="jbin"/>
+                <dirName path="${jbin}" variable="java_home"/>
                 <if>
                     <actionList>
-                        <dirName path="${java_executable}" variable="jbin"/>
                         <setInstallerVariable name="keytool_executable" value="${jbin}\keytool.exe"/>
                     </actionList>
                     <conditionRuleList>
@@ -270,6 +271,13 @@
                             <destinationDirectory>${installdir}</destinationDirectory>
                             <zipFile>${system_temp_directory}/${tname}</zipFile>
                         </unzip>
+                        <addTextToFile>
+                            <file>${installdir}/glassfish4/glassfish/config/asenv.bat</file>
+                            <text>set AS_JAVA=${java_home.dos}</text>
+                            <ruleList>
+                                <platformTest type="windows"/>
+                            </ruleList>
+                        </addTextToFile>
                         <asadmin cmd="delete-domain domain1" msg="delete domain"/>
                         <generateRandomValue length="5" variable="tname"/>
                         <writeFile path="${system_temp_directory}/${tname}" text="AS_ADMIN_PASSWORD=${glassfish_password.password}"/>
@@ -292,6 +300,9 @@
                         <asadmin cmd="delete-network-listener http-listener-2" msg="Limit set of cifers in glassfish"/>
                         <asadmin cmd="create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2" msg="Limit set of cifers in glassfish"/>
                         <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <asadmin cmd="set configs.config.server-config.network-config.protocols.protocol.http-listener-2.http.request-timeout-seconds=-1">
+                            <msg></msg>
+                        </asadmin>
                         <runProgram program="${keytool_executable}" programArguments="-export -keystore ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file  ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as" progressText="Extracting certificate"/>
                         <httpGet filename="${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar" progressText="Installing MySQL connector" url="http://www.icatproject.org/misc/install/mysql-connector-java-5.1.30-bin.jar"/>
                     </actionList>
@@ -1000,7 +1011,7 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                     <abortOnError>0</abortOnError>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>undeploy topcat-${topcat_version}</programArguments>
-                    <progressText>Undeploy IDS server</progressText>
+                    <progressText>Undeploy TopCAT</progressText>
                     <showMessageOnError>0</showMessageOnError>
                 </runProgram>
                 <runProgram>
@@ -1014,7 +1025,7 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                     <abortOnError>0</abortOnError>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>undeploy icat.server-${icat_server_version}</programArguments>
-                    <progressText>Undeploy icat server</progressText>
+                    <progressText>Undeploy ICAT server</progressText>
                     <showMessageOnError>0</showMessageOnError>
                 </runProgram>
             </preInstallationActionList>
