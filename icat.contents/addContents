@@ -20,67 +20,52 @@ class IcatException(Exception):
 
 class IcatClient(object):
 
-   def __init__(self, url):
+    def __init__(self, url):
         """
         Create an IcatClient. The url should have the scheme, hostname and optionally the port. 
         It may also have a path if it is installed behind an apache front end. 
         """
         o = urlparse.urlparse(url)
-        self.secure = o.scheme == "https"
-        self.ids_host = o.netloc
+        self.icat_host = o.netloc
         path = o.path
         if not path.endswith("/"): path = path + "/"
         self.path = path + "icat/"
         self.sessionId = None
-
-   def _process(self, relativeUrl, parameters, method, headers=None, body=None):
-        path = self.path + relativeUrl
-        if parameters: parameters = urlencode(parameters)
-        if parameters and method != "POST":
-            path = path + "?" + parameters
-        urllen = 4 + len(path) + len(self.ids_host)
-        if self.secure:
-            conn = httplib.HTTPSConnection(self.ids_host)
-            urllen += 5
-        else:
-            conn = httplib.HTTPConnection(self.ids_host)
-            urllen += 4
-        if urllen > 2048: raise IcatException(400, "Generated URI is of length "
-                        + urllen + " which exceeds 2048")
-             
-        conn.putrequest(method, path, skip_accept_encoding=True)
+ 
+    def import_data(self, stream, attributes="user" , duplicate="throw"):  
+        parms = {}
+        parms["sessionId"] = self.sessionId
+        parms["attributes"] = attributes
+        parms["duplicate"] = duplicate 
+        js = json.dumps(parms)
+        path = self.path + "port"
+        conn = httplib.HTTPSConnection(self.icat_host)
+        conn.putrequest("POST", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
         conn.putheader("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")
         conn.putheader("Connection", "keep-alive") 
-        
-        if parameters and method == "POST":
-            conn.putheader('Content-Length', str(len(parameters)))
-        elif body:
-            conn.putheader('Transfer-Encoding', 'chunked')
-           
-        if headers:
-            for header in headers:
-                conn.putheader(header, headers[header])
-                
-        if parameters and method == "POST":
-            conn.putheader('Content-Type', 'application/x-www-form-urlencoded')       
-                
+ 
+        BOUNDARY = 'gc0p4Jq0M2Yt08jU534c0p'
+        CRLF = '\r\n'
+ 
+        L = []
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="json"')
+        L.append('')
+        L.append(js)
+        L.append('--' + BOUNDARY)
+        L.append('Content-Disposition: form-data; name="file"; filename="file"')
+        L.append('Content-Type: application/text/plain')
+        L.append('')
+        L.append(stream.read())
+        L.append('--' + BOUNDARY + '--')
+        L.append('')
+        body = CRLF.join(L)
+        conn.putheader("Content-Type", 'multipart/form-data; boundary=' + BOUNDARY)
+        conn.putheader("Content-Length", len(body))
         conn.endheaders()
-        
-        if parameters and method == "POST":
-            conn.send(parameters)
-        elif body:
-            blocksize = 8192
-            datablock = body.read(blocksize)
-            crc32 = 0
-            while datablock:
-                conn.send(hex(len(datablock))[2:] + "\r\n")
-                conn.send(datablock + "\r\n")
-                crc32 = zlib.crc32(datablock, crc32)
-                datablock = body.read(blocksize)
-            conn.send("0\r\n\r\n")
-       
+        conn.send(body)
         response = conn.getresponse()
         rc = response.status
         if (rc / 100 != 2):
@@ -92,50 +77,58 @@ class IcatClient(object):
             code = om["code"]
             message = om["message"]
             raise IcatException(code, message)
-        if body:
-            return response, crc32 & 0xffffffff
-        else:
-            return response
+        return response.read()
 
-
-   def getApiVersion(self):
-        """
-        Get the version of the server
-        """
-        return self._process("version", {}, "GET").read()
-
-   def login(self, plugin, creds):
-       cmap = []
-       for i in range (0, len(creds), 2):
-           key = creds[i]   
-           if creds[i + 1] == "-":
-               value = getpass.getpass()
-           else:
-               value = creds[i + 1]
-           cmap.append({key:value})
-       js = json.dumps({"plugin" : plugin, "credentials": cmap})
-       self.sessionId = json.loads(self._process("session",{"json": js}, "POST").read())["sessionId"]       
-
-   def _checkSessionId(self):
-       if not self.sessionId:
-           raise IcatException(403, "Please login first")
-
-   def search(self, query):
-       self._checkSessionId()
-       return self._process("entityManager", {"sessionId": self.sessionId, "query":query}, "GET").read()
-
+    def login(self, plugin, creds):
+        cmap = []
+        for i in range (0, len(creds), 2):
+            key = creds[i]   
+            if creds[i + 1] == "-":
+                value = getpass.getpass()
+            else:
+                value = creds[i + 1]
+            cmap.append({key:value})
+        js = json.dumps({"plugin" : plugin, "credentials": cmap})
+     
+        path = self.path + "session"
+        parameters = urlencode({"json": js})
+        
+        conn = httplib.HTTPSConnection(self.icat_host)
+        conn.putrequest("POST", path, skip_accept_encoding=True)
+        conn.putheader("Cache-Control", "no-cache")
+        conn.putheader("Pragma", "no-cache")
+        conn.putheader("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")
+        conn.putheader("Connection", "keep-alive") 
+        conn.putheader('Content-Length', str(len(parameters)))
+        conn.putheader('Content-Type', 'application/x-www-form-urlencoded')       
+        conn.endheaders()
+        conn.send(parameters)
+        
+        response = conn.getresponse()
+        rc = response.status
+        if (rc / 100 != 2):
+            try:
+                responseContent = response.read()
+                om = json.loads(responseContent)
+            except Exception:
+                raise IcatException("InternalException", responseContent)
+            code = om["code"]
+            message = om["message"]
+            raise IcatException(code, message)
+        self.sessionId = json.loads(response.read())["sessionId"] 
+        
 args = sys.argv
-if len(args) < 3 or len(args) % 2 != 1:
-    print >> sys.stderr, "\nThis must have two fixed arguments: url and plugin mnemonic\nfollowed by pairs of arguments to represent the credentials. For example\n\n    ", args[0], "https://example.com:8181 db username root password guess\n"
+if len(args) < 4 or len(args) % 2 != 0:
+    print >> sys.stderr, "\nThis must have three fixed arguments: url, file and plugin mnemonic\nfollowed by pairs of arguments to represent the credentials. For example\n\n    ", args[0], "https://example.com:8181 db username root password guess\n"
     sys.exit(1)
 
 url = args[1]
-plugin = args[2]
+imp_file = args[2]
+plugin = args[3]
 
 client = IcatClient(url)
 
-#print client.getApiVersion()
-client.login(plugin, args[3:])
-print client.sessionId
-facilities = client.search("Select f.name from Facility f")
-print facilities
+client.login(plugin, args[4:])
+f = open(imp_file)
+client.import_data(f, attributes="all" , duplicate="ignore")
+f.close()

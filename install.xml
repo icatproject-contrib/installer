@@ -314,7 +314,8 @@
                         </compareValues>
                     </conditionRuleList>
                 </if>
-                <runProgram>
+
+                <!--   <runProgram>
                     <abortOnError>0</abortOnError>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>stop-domain</programArguments>
@@ -323,7 +324,7 @@
                 </runProgram>
                 <asadmin cmd="start-domain">
                     <msg>Start glassfish</msg>
-                </asadmin>
+                </asadmin> -->
             </postInstallationActionList>
             <postUninstallationActionList>
                 <deleteFile path="${installdir}/glassfish4/"/>
@@ -1031,6 +1032,55 @@ The prefix must correspond to one of the authenticators you have selected.</expl
             </preInstallationActionList>
         </component>
         <component>
+            <name>icat_contents</name>
+            <description>ICAT Demo Contents</description>
+            <canBeEdited>1</canBeEdited>
+            <selected>1</selected>
+            <show>1</show>
+            <folderList>
+                <folder>
+                    <description></description>
+                    <destination>${installdir}/icat.contents</destination>
+                    <name>icat_contents</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile allowWildcards="1">
+                            <origin>icat.contents/*</origin>
+                        </distributionFile>
+                    </distributionFileList>
+                    <ruleList>
+                        <fileExists>
+                            <negate>1</negate>
+                            <path>${installdir}/icat.contents</path>
+                        </fileExists>
+                    </ruleList>
+                </folder>
+            </folderList>
+            <postInstallationActionList>
+                <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="seq">
+                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select SEQ_COUNT from SEQUENCE"</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <if>
+                    <progressText>Set up contents</progressText>
+                    <actionList>
+                        <showQuestion default="no">
+                            <text>The database has already been used. Do you want to attempt to install demo data anyway?</text>
+                            <variable>overwrite</variable>
+                        </showQuestion>
+                        <setInstallerVariable name="seq" value="0">
+                            <ruleList>
+                                <compareText logic="equals" text="${overwrite}" value="yes"/>
+                            </ruleList>
+                        </setInstallerVariable>
+                    </actionList>
+                    <conditionRuleList>
+                        <compareText logic="equals" negate="1" text="${seq}" value="0"/>
+                    </conditionRuleList>
+                </if>
+                <showInfo text="${seq}"/>
+            </postInstallationActionList>
+        </component>
+        <component>
             <name>ids_storage_file</name>
             <description>IDS storage_file plugin</description>
             <canBeEdited>0</canBeEdited>
@@ -1223,9 +1273,8 @@ where the prefix must correspond to an installed authenticator.</explanation>
                 </parameterGroup>
             </parameterList>
             <postInstallationActionList>
-                <prepare component="ids.server" componentVersion="${ids_server_version}" propertyRoot="ids" setupProperties="libraries=ids.storage_file*.jar">
-                    <url></url>
-                </prepare>
+                <prepare component="ids.server" componentVersion="${ids_server_version}" propertyRoot="ids" setupProperties="libraries=ids.storage_file*.jar" url=""/>
+                 
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="reader" value="${ids_reader}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="rootUserNames" value="${ids_rootUserNames}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="cache.dir" value="${ids_cache_dir}"/>
