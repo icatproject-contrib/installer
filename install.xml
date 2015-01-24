@@ -314,8 +314,7 @@
                         </compareValues>
                     </conditionRuleList>
                 </if>
-
-                <!--   <runProgram>
+                <runProgram>
                     <abortOnError>0</abortOnError>
                     <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
                     <programArguments>stop-domain</programArguments>
@@ -324,7 +323,7 @@
                 </runProgram>
                 <asadmin cmd="start-domain">
                     <msg>Start glassfish</msg>
-                </asadmin> -->
+                </asadmin>
             </postInstallationActionList>
             <postUninstallationActionList>
                 <deleteFile path="${installdir}/glassfish4/"/>
@@ -869,8 +868,9 @@
                     <parameterList>
                         <stringParameter name="icatDB" value="icat" default="icat">
                             <description>Name of MySQL Database to use for ICAT server</description>
-                            <explanation>The data base for the ICAT server will be created for you. 
-If you use an existing database an attempt will be made to add the required tables to it.
+                            <explanation>The data base for the ICAT server will be created for you.
+                                If you use an existing database an attempt will be
+                                made to add the required tables to it.
                             </explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
@@ -881,8 +881,10 @@ If you use an existing database an attempt will be made to add the required tabl
                         <stringParameter>
                             <name>rootUserNames</name>
                             <description>rootUserNames</description>
-                            <explanation>Space separated list of users with "root" access to the ICAT server; for example: simple/root. 
-The prefix must correspond to one of the authenticators you have selected.</explanation>
+                            <explanation>Space separated list of users with "root" access to the ICAT server; for example: simple/root.
+                                The prefix must
+                                correspond to one of the authenticators you have selected.
+                            </explanation>
                             <value>${rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -999,13 +1001,14 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                 <createDirectory path="${user_home_directory}/bin"/>
                 <runProgram workingDirectory="${installdir}/icat.server">
                     <program>${python_executable}</program>
-                    <programArguments>${installdir.dos}/icat.server/setup -v install --binDir=${user_home_directory}/bin</programArguments>
+                    <programArguments>setup -v install --binDir=${user_home_directory.dos}/bin</programArguments>
                     <progressText>Deploying ICAT Server</progressText>
                     <onErrorActionList>
                         <showWarning text="Will abort: ${program_stdout}${program_stderr}"/>
                         <exit exitCode="1"/>
                     </onErrorActionList>
                 </runProgram>
+                <wait ms="10000" progressText="wait for 10 seconds"/>
             </postInstallationActionList>
             <preInstallationActionList>
                 <runProgram>
@@ -1056,6 +1059,27 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                     </ruleList>
                 </folder>
             </folderList>
+            <parameterList>
+                <parameterGroup>
+                    <name>ICATContentsConfiguration</name>
+                    <title>ICAT Contents Configuration</title>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter name="root_credentials">
+                            <description>Root credentials</description>
+                            <explanation>Root credentials are specified by a space separated icat plugin name and credentials for a user included in
+                                the icat root user list.
+                            </explanation>
+                            <value></value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                    </parameterList>
+                </parameterGroup>
+            </parameterList>
             <postInstallationActionList>
                 <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="seq">
                     <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select SEQ_COUNT from SEQUENCE"</execArgs>
@@ -1077,7 +1101,14 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                         <compareText logic="equals" negate="1" text="${seq}" value="0"/>
                     </conditionRuleList>
                 </if>
-                <showInfo text="${seq}"/>
+                <runProgram workingDirectory="${installdir}/icat.contents">
+                    <program>${python_executable}</program>
+                    <programArguments>addContents https://${machine_fqdn}:8181 icat.port ${root_credentials}</programArguments>
+                    <progressText>Populating ICAT Server</progressText>
+                    <ruleList>
+                        <compareText logic="equals" text="${seq}" value="0"/>
+                    </ruleList>
+                </runProgram>
             </postInstallationActionList>
         </component>
         <component>
@@ -1196,7 +1227,9 @@ The prefix must correspond to one of the authenticators you have selected.</expl
                         <stringParameter name="ids_reader">
                             <description>reader</description>
                             <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted
-to read all datasets, datafiles, investigations and facilities. For example: db username root password secret.</explanation>
+                                to read all
+                                datasets, datafiles, investigations and facilities. For example: db username root password secret.
+                            </explanation>
                             <value>${idsReader}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1205,7 +1238,9 @@ to read all datasets, datafiles, investigations and facilities. For example: db 
                         <stringParameter name="ids_rootUserNames">
                             <description>rootUserNames</description>
                             <explanation>A space separated list of user names allowed to make the getServiceStatus call. For example simple/root
-where the prefix must correspond to an installed authenticator.</explanation>
+                                where
+                                the prefix must correspond to an installed authenticator.
+                            </explanation>
                             <value>${ids_rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1213,7 +1248,9 @@ where the prefix must correspond to an installed authenticator.</explanation>
                         </stringParameter>
                         <stringParameter name="ids_cache_dir">
                             <description>cache.dir</description>
-                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip files.</explanation>
+                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
+                                files.
+                            </explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1274,7 +1311,6 @@ where the prefix must correspond to an installed authenticator.</explanation>
             </parameterList>
             <postInstallationActionList>
                 <prepare component="ids.server" componentVersion="${ids_server_version}" propertyRoot="ids" setupProperties="libraries=ids.storage_file*.jar" url=""/>
-                 
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="reader" value="${ids_reader}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="rootUserNames" value="${ids_rootUserNames}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="cache.dir" value="${ids_cache_dir}"/>
@@ -1327,7 +1363,8 @@ where the prefix must correspond to an installed authenticator.</explanation>
                         <stringParameter name="topcatDB" value="topcat" default="topcat">
                             <description>Name of MySQL Database to use for TopCAT</description>
                             <explanation>The database will be created for you. If you use an existing database an attempt will be made to add the
-required tables to it.</explanation>
+                                required tables to it.
+                            </explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
                         </stringParameter>
@@ -1335,8 +1372,11 @@ required tables to it.</explanation>
                             <name>topcat_adminPassword</name>
                             <description>Password</description>
                             <explanation>Password for the TopCAT admin interface. The username will be admin. The password must contain at least
-one lower case letter, one upper case letter and a digit and be at least six characters long as this provides
-access via a web browser and so should be more secure.</explanation>
+                                one
+                                lower case letter, one upper case letter and a digit and be at least six characters long as this provides
+                                access via a
+                                web browser and so should be more secure.
+                            </explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1364,7 +1404,8 @@ access via a web browser and so should be more secure.</explanation>
                 <runProgram>
                     <program>${mysql_executable}</program>
                     <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${topcatDB}.* to
-                        '${mysql_username}'@'localhost'"</programArguments>
+                        '${mysql_username}'@'localhost'"
+                    </programArguments>
                     <progressText>Configuring TopCAT database</progressText>
                 </runProgram>
                 <runProgram>
@@ -1397,7 +1438,8 @@ access via a web browser and so should be more secure.</explanation>
                             <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
                                 TOPCAT_ICAT_SERVER(ID, DOWNLOAD_PLUGIN_NAME, DOWNLOAD_SERVICE_URL, DOWNLOAD_TYPE, NAME, SERVER_URL, VERSION,
                                 ALLOW_UPLOAD, ALLOW_CREATE_DATASET) values (1, 'ids', 'https://${machine_fqdn}:8181', 'archived',
-                                '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v43', 1,1)"</programArguments>
+                                '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v43', 1,1)"
+                            </programArguments>
                         </runProgram>
                         <setInstallerVariable name="n" value="0"/>
                         <foreach>
@@ -1426,13 +1468,15 @@ access via a web browser and so should be more secure.</explanation>
                                 <runProgram program="${mysql_executable}">
                                     <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
                                         TOPCAT_ICAT_AUTHENTICATION(ID, AUTHENTICATION_TYPE, DISPLAY_NAME, PLUGIN_NAME, SERVER_ID) values (${n},
-                                        '${authn}', '${authn}', '${plugin}', 1)"</programArguments>
+                                        '${authn}', '${authn}', '${plugin}', 1)"
+                                    </programArguments>
                                 </runProgram>
                             </actionList>
                         </foreach>
                         <runProgram program="${mysql_executable}">
                             <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "update SEQUENCE set SEQ_COUNT =
-                                ${n}"</programArguments>
+                                ${n}"
+                            </programArguments>
                         </runProgram>
                     </actionList>
                     <conditionRuleList>
@@ -1513,7 +1557,7 @@ access via a web browser and so should be more secure.</explanation>
         </throwError>
     </initializationActionList>
     <postUninstallationActionList>
-        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server ids.storage_file ids.server topcat" variables="comp">
+        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server icat.contents ids.storage_file ids.server topcat" variables="comp">
             <actionList>
                 <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*"/>
                 <deleteFile path="${installdir}/${comp}/*-setup.properties"/>
