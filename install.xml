@@ -8,6 +8,37 @@
     <logoImage>small.gif</logoImage>
     <splashImage>logo.gif</splashImage>
     <functionDefinitionList>
+        <!--Init variables both used before help and before installation -->
+        <actionDefinition name="initvars">
+            <actionList>
+                <setInstallerVariable name="n" value="0"/>
+                <while>
+                    <actionList>
+                        <setInstallerVariable name="user${n}" value=""/>
+                        <setInstallerVariable name="password${n}" value=""/>
+                        <mathExpression text="${n} + 1" variable="n"/>
+                    </actionList>
+                    <conditionRuleList>
+                        <compareValues logic="less" value1="${n}" value2="5"/>
+                    </conditionRuleList>
+                </while>
+                <setInstallerVariable name="provider_url" value=""/>
+                <setInstallerVariable name="security_principal" value=""/>
+                <setInstallerVariable name="case" value="lower"/>
+                <setInstallerVariable name="rootUserNames" value=""/>
+                <setInstallerVariable name="maxEntities" value="10000"/>
+                <setInstallerVariable name="mainDir" value="${user_home_directory}/ids/main"/>
+                <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
+                <setInstallerVariable name="ids_reader" value=""/>
+                <setInstallerVariable name="ids_rootUserNames" value=""/>
+                <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
+                <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
+                <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
+                <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
+                <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
+            </actionList>
+        </actionDefinition>
+
         <!-- Prepare to run setup -->
         <actionDefinition name="prepare">
             <actionList>
@@ -163,9 +194,7 @@
             <readyToInstallActionList>
                 <setInstallerVariableFromScriptOutput>
                     <exec>${mysql_executable}</exec>
-                    <execArgs>-u root -p${mysql_root_password.password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user
-                        ='${mysql_username}'"
-                    </execArgs>
+                    <execArgs>-u root -p${mysql_root_password.password} -N -B -e "SELECT COUNT(*) FROM mysql.user WHERE host='localhost' and user ='${mysql_username}'"</execArgs>
                     <name>result</name>
                     <onErrorActionList>
                         <throwError>
@@ -741,11 +770,6 @@
                                             <conditionRuleList>
                                                 <fileExists path="${installdir}/authn_ldap/authn_ldap.properties"/>
                                             </conditionRuleList>
-                                            <elseActionList>
-                                                <setInstallerVariable name="provider_url" value=""/>
-                                                <setInstallerVariable name="security_principal" value=""/>
-                                                <setInstallerVariable name="case" value="lower"/>
-                                            </elseActionList>
                                         </if>
                                         <setInstallerVariable name="authnLdapPagesInited" value="1"/>
                                     </actionList>
@@ -912,10 +936,6 @@
                                             <path>${installdir}/icat.server/icat.properties</path>
                                         </fileExists>
                                     </conditionRuleList>
-                                    <elseActionList>
-                                        <setInstallerVariable name="rootUserNames" value=""/>
-                                        <setInstallerVariable name="maxEntities" value="10000"/>
-                                    </elseActionList>
                                 </if>
                                 <setInstallerVariable name="icatServerPagesInited" value="1"/>
                             </actionList>
@@ -997,7 +1017,8 @@
                         <exit exitCode="1"/>
                     </onErrorActionList>
                 </runProgram>
-                <wait ms="10000" progressText="wait for 10 seconds"/>
+                <asadmin cmd="stop-domain domain1" msg="Restart domain after deploying ICAT"/>
+                <asadmin cmd="start-domain domain1" msg="Restart domain after deploying ICAT"/>
             </postInstallationActionList>
             <preInstallationActionList>
                 <runProgram>
@@ -1137,10 +1158,6 @@
                                         <fileExists path="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
                                         <fileExists path="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
                                     </conditionRuleList>
-                                    <elseActionList>
-                                        <setInstallerVariable name="mainDir" value="${user_home_directory}/ids/main"/>
-                                        <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
-                                    </elseActionList>
                                 </if>
                                 <setInstallerVariable name="idsStorageFilePagesInited" value="1"/>
                             </actionList>
@@ -1245,7 +1262,7 @@
                             <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
                                 files.
                             </explanation>
-                            <value></value>
+                            <value>${ids_cache_dir}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>60</width>
@@ -1284,15 +1301,6 @@
                                     <conditionRuleList>
                                         <fileExists path="${installdir}/ids.server/ids.properties"/>
                                     </conditionRuleList>
-                                    <elseActionList>
-                                        <setInstallerVariable name="ids_reader" value=""/>
-                                        <setInstallerVariable name="ids_rootUserNames" value=""/>
-                                        <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
-                                        <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
-                                        <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
-                                        <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
-                                        <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
-                                    </elseActionList>
                                 </if>
                                 <setInstallerVariable name="idsServerPagesInited" value="1"/>
                             </actionList>
@@ -1313,25 +1321,45 @@
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" value="${ids_filesCheck_lastIdFile}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" value="${ids_filesCheck_errorLog}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
-                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
-                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        "${ids_cache_dir}".strip()))'
-                    </execArgs>
-                </setInstallerVariableFromScriptOutput>
-                <createDirectory path="${dir}"/>
-                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
-                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'
-                    </execArgs>
-                </setInstallerVariableFromScriptOutput>
-                <createDirectory path="${dir}"/>
-                <setInstallerVariableFromScriptOutput exec="${python_executable}" name="dir">
-                    <execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",
-                        os.path.dirname("${ids_filesCheck_errorLog}".strip())))'
-                    </execArgs>
-                </setInstallerVariableFromScriptOutput>
-                <createDirectory path="${dir}"/>
-                <setup component="ids.server" msg="Deploying IDS Server"/>
+	<if>
+		<actionList>
+			<setInstallerVariableFromScriptOutput
+				exec="${python_executable}" name="dir1">
+				<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/","${ids_cache_dir}".strip()))'</execArgs>
+			</setInstallerVariableFromScriptOutput>
+			<setInstallerVariableFromScriptOutput
+				exec="${python_executable}" name="dir2">
+				<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'</execArgs>
+			</setInstallerVariableFromScriptOutput>
+			<setInstallerVariableFromScriptOutput
+		exec="${python_executable}" name="dir3">
+		<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",os.path.dirname("${ids_filesCheck_errorLog}".strip())))'</execArgs>
+	</setInstallerVariableFromScriptOutput>
+		</actionList>
+		<conditionRuleList>
+			<platformTest negate="1" type="windows" />
+		</conditionRuleList>
+		<elseActionList>
+			<setInstallerVariableFromScriptOutput
+				exec="${python_executable}" name="dir1">
+				<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",""${ids_cache_dir}"".strip()))"</execArgs>
+			</setInstallerVariableFromScriptOutput>
+			<setInstallerVariableFromScriptOutput
+				exec="${python_executable}" name="dir2">
+				<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",os.path.dirname(""${ids_filesCheck_lastIdFile}"".strip())))"</execArgs>
+			</setInstallerVariableFromScriptOutput>
+			<setInstallerVariableFromScriptOutput
+		exec="${python_executable}" name="dir3">
+		<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",os.path.dirname(""${ids_filesCheck_errorLog}"".strip())))"</execArgs>
+	</setInstallerVariableFromScriptOutput>
+		</elseActionList>
+	</if>
+	<createDirectory path="${dir1}" />
+
+	<createDirectory path="${dir2}" />
+	
+	<createDirectory path="${dir3}" />
+	<setup component="ids.server" msg="Deploying IDS Server" />
             </postInstallationActionList>
         </component>
         <component>
@@ -1490,6 +1518,7 @@
         <setInstallerVariable name="ids_server_version" value="1.3.1"/>
         <setInstallerVariable name="ids_storage_file_version" value="1.3.2"/>
         <setInstallerVariable name="topcat_version" value="1.12.0"/>
+        <initvars/>
         <locate>
             <command>python</command>
             <variable>python_executable</variable>
@@ -1549,12 +1578,13 @@
         </throwError>
     </initializationActionList>
     <postUninstallationActionList>
-        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server icat.contents ids.storage_file ids.server topcat" variables="comp">
+        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server ids.storage_file ids.server topcat" variables="comp">
             <actionList>
                 <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*"/>
                 <deleteFile path="${installdir}/${comp}/*-setup.properties"/>
             </actionList>
         </foreach>
+        <deleteFile path="${installdir}/icat.contents"/>
     </postUninstallationActionList>
     <allowComponentSelection>1</allowComponentSelection>
     <enableRollback>0</enableRollback>
@@ -1620,17 +1650,7 @@
         </parameterGroup>
     </parameterList>
     <preShowHelpActionList>
-        <setInstallerVariable name="n" value="0"/>
-        <while>
-            <actionList>
-                <setInstallerVariable name="user${n}" value=""/>
-                <setInstallerVariable name="password${n}" value=""/>
-                <mathExpression text="${n} + 1" variable="n"/>
-            </actionList>
-            <conditionRuleList>
-                <compareValues logic="less" value1="${n}" value2="5"/>
-            </conditionRuleList>
-        </while>
+        <initvars/>
     </preShowHelpActionList>
 </project>
 
