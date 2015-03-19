@@ -567,17 +567,6 @@
                             <preShowPageActionList>
                                 <if>
                                     <actionList>
-                                        <setInstallerVariable name="n" value="0"/>
-                                        <while>
-                                            <actionList>
-                                                <setInstallerVariable name="user${n}" value=""/>
-                                                <setInstallerVariable name="password${n}" value=""/>
-                                                <mathExpression text="${n} + 1" variable="n"/>
-                                            </actionList>
-                                            <conditionRuleList>
-                                                <compareValues logic="less" value1="${n}" value2="5"/>
-                                            </conditionRuleList>
-                                        </while>
                                         <if>
                                             <actionList>
                                                 <propertiesFileGet>
@@ -686,7 +675,7 @@
                                     <name>provider_url</name>
                                     <description>provider_url</description>
                                     <explanation>The url of the ldap server</explanation>
-                                    <value>${provide_url}</value>
+                                    <value>${provider_url}</value>
                                     <default></default>
                                     <allowEmptyValue>0</allowEmptyValue>
                                     <width>30</width>
@@ -768,7 +757,7 @@
                         </parameterGroup>
                     </parameterList>
                     <postInstallationActionList>
-                        <prepare component="authn_ldap" componentVersion="${authn_ldap_version}" propertyRoot="authn_ldap" url="http://icatproject.org/misc/install/authn_ldap-1.1.0-distro.zip">
+                        <prepare component="authn_ldap" componentVersion="${authn_ldap_version}" propertyRoot="authn_ldap" url="http://icatproject.org/misc/install/authn_ldap-${authn_ldap_version}-distro.zip">
                             <setupProperties></setupProperties>
                         </prepare>
                         <propertiesFileSet>
@@ -1202,7 +1191,12 @@
                 <propertiesFileSet file="${installdir}/ids.storage_file/ids.storage_file.archive.properties" key="dir" value="${archiveDir}"/>
                 <createDirectory path="${mainDir}"/>
                 <createDirectory path="${archiveDir}"/>
-                <setup component="ids.storage_file" msg="Deploying IDS storage_file plugin"/>
+                <copyFile destination="${installdir}/glassfish4/glassfish/domains/domain1/config" origin="${installdir}/ids.storage_file/ids.storage_file.main.properties"/>
+                <copyFile destination="${installdir}/glassfish4/glassfish/domains/domain1/config" origin="${installdir}/ids.storage_file/ids.storage_file.archive.properties"/>
+                <deleteFile path="${installdir}/glassfish4/glassfish/domains/domain1/lib/applibs/ids.storage_file*.jar"/>
+                <copyFile destination="${installdir}/glassfish4/glassfish/domains/domain1/lib/applibs/" origin="${installdir}/ids.storage_file/ids.storage_file*.jar"/>
+                <asadmin cmd="stop-domain domain1" msg="Restart domain after deploying IDS StorageFile Plugin"/>
+                <asadmin cmd="start-domain domain1" msg="Restart domain after deploying IDS StorageFile Plugin"/>
             </postInstallationActionList>
         </component>
         <component>
@@ -1372,10 +1366,8 @@
                             <name>topcat_adminPassword</name>
                             <description>Password</description>
                             <explanation>Password for the TopCAT admin interface. The username will be admin. The password must contain at least
-                                one
-                                lower case letter, one upper case letter and a digit and be at least six characters long as this provides
-                                access via a
-                                web browser and so should be more secure.
+                                one lower case letter, one upper case letter and a digit and be at least six characters long as this 
+                                provides access via a web browser and so should be more secure.
                             </explanation>
                             <value></value>
                             <default></default>
@@ -1490,13 +1482,13 @@
         </component>
     </componentList>
     <initializationActionList>
+        <setInstallerVariable name="authn_anon_version" value="1.0.2"/>
         <setInstallerVariable name="authn_db_version" value="1.1.2"/>
         <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
         <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
-        <setInstallerVariable name="authn_anon_version" value="1.0.2"/>
         <setInstallerVariable name="icat_server_version" value="4.4.0"/>
-        <setInstallerVariable name="ids_storage_file_version" value="1.3.0"/>
-        <setInstallerVariable name="ids_server_version" value="1.3.0"/>
+        <setInstallerVariable name="ids_server_version" value="1.3.1"/>
+        <setInstallerVariable name="ids_storage_file_version" value="1.3.2"/>
         <setInstallerVariable name="topcat_version" value="1.12.0"/>
         <locate>
             <command>python</command>
@@ -1627,5 +1619,18 @@
             </parameterList>
         </parameterGroup>
     </parameterList>
+    <preShowHelpActionList>
+        <setInstallerVariable name="n" value="0"/>
+        <while>
+            <actionList>
+                <setInstallerVariable name="user${n}" value=""/>
+                <setInstallerVariable name="password${n}" value=""/>
+                <mathExpression text="${n} + 1" variable="n"/>
+            </actionList>
+            <conditionRuleList>
+                <compareValues logic="less" value1="${n}" value2="5"/>
+            </conditionRuleList>
+        </while>
+    </preShowHelpActionList>
 </project>
 
