@@ -34,8 +34,6 @@
                 <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
                 <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
                 <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
-                <setInstallerVariable name="ids_filesCheck_lastIdFile" value="../data/ids/lastIdFile"/>
-                <setInstallerVariable name="ids_filesCheck_errorLog" value="../data/ids/errorLog"/>
             </actionList>
         </actionDefinition>
 
@@ -862,6 +860,7 @@
             <selected>1</selected>
             <show>0</show>
             <componentSelectionValidationActionList>
+                <logMessage text="Check that ICAT Server is good to install"/>
                 <throwError text="You must install at least one authenticator.">
                     <ruleList>
                         <isFalse value="${component(authn).component(authn_anon).selected}"/>
@@ -870,6 +869,7 @@
                         <isFalse value="${component(authn).component(authn_simple).selected}"/>
                     </ruleList>
                 </throwError>
+                <logMessage text="ICAT Server is good to install"/>
             </componentSelectionValidationActionList>
             <parameterList>
                 <parameterGroup>
@@ -947,6 +947,7 @@
                 </parameterGroup>
             </parameterList>
             <postInstallationActionList>
+                <logMessage text="Post install of ICAT Server"/>
                 <runProgram>
                     <program>${mysql_executable}</program>
                     <programArguments>-u root -p${mysql_root_password.password} -N -B -e "grant all on ${icatDB}.* to '${mysql_username}'@'localhost'"
@@ -1225,6 +1226,7 @@
             <selected>1</selected>
             <show>1</show>
             <componentSelectionValidationActionList>
+                <logMessage text="IDS Selection Validation"/>
                 <componentSelection deselect="" select="ids_storage_file"/>
             </componentSelectionValidationActionList>
             <parameterList>
@@ -1295,8 +1297,6 @@
                                         <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="cache.dir" variable="ids_cache_dir"/>
                                         <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" variable="ids_filesCheck_parallelCount"/>
                                         <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" variable="ids_filesCheck_gapSeconds"/>
-                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
-                                        <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
                                     </actionList>
                                     <conditionRuleList>
                                         <fileExists path="${installdir}/ids.server/ids.properties"/>
@@ -1318,48 +1318,57 @@
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="cache.dir" value="${ids_cache_dir}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" value="${ids_filesCheck_parallelCount}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" value="${ids_filesCheck_gapSeconds}"/>
-                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" value="${ids_filesCheck_lastIdFile}"/>
-                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" value="${ids_filesCheck_errorLog}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
-	<if>
-		<actionList>
-			<setInstallerVariableFromScriptOutput
-				exec="${python_executable}" name="dir1">
-				<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/","${ids_cache_dir}".strip()))'</execArgs>
-			</setInstallerVariableFromScriptOutput>
-			<setInstallerVariableFromScriptOutput
-				exec="${python_executable}" name="dir2">
-				<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",os.path.dirname("${ids_filesCheck_lastIdFile}".strip())))'</execArgs>
-			</setInstallerVariableFromScriptOutput>
-			<setInstallerVariableFromScriptOutput
-		exec="${python_executable}" name="dir3">
-		<execArgs>-c 'import os.path; print os.path.normpath(os.path.join("${installdir}/glassfish4/glassfish/domains/domain1/config/",os.path.dirname("${ids_filesCheck_errorLog}".strip())))'</execArgs>
-	</setInstallerVariableFromScriptOutput>
-		</actionList>
-		<conditionRuleList>
-			<platformTest negate="1" type="windows" />
-		</conditionRuleList>
-		<elseActionList>
-			<setInstallerVariableFromScriptOutput
-				exec="${python_executable}" name="dir1">
-				<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",""${ids_cache_dir}"".strip()))"</execArgs>
-			</setInstallerVariableFromScriptOutput>
-			<setInstallerVariableFromScriptOutput
-				exec="${python_executable}" name="dir2">
-				<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",os.path.dirname(""${ids_filesCheck_lastIdFile}"".strip())))"</execArgs>
-			</setInstallerVariableFromScriptOutput>
-			<setInstallerVariableFromScriptOutput
-		exec="${python_executable}" name="dir3">
-		<execArgs>-c "import os.path; print os.path.normpath(os.path.join(""${installdir.dos}/glassfish4/glassfish/domains/domain1/config/"",os.path.dirname(""${ids_filesCheck_errorLog}"".strip())))"</execArgs>
-	</setInstallerVariableFromScriptOutput>
-		</elseActionList>
-	</if>
-	<createDirectory path="${dir1}" />
-
-	<createDirectory path="${dir2}" />
-	
-	<createDirectory path="${dir3}" />
-	<setup component="ids.server" msg="Deploying IDS Server" />
+                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
+                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
+                <if>
+                    <actionList>
+                        <createDirectory path="${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${ids_cache_dir}"/>
+                    </actionList>
+                    <conditionRuleList>
+                        <regExMatch logic="matches" negate="1" text="${ids_cache_dir}">
+                            <pattern>^[/\\].*$</pattern>
+                        </regExMatch>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <createDirectory path="${ids_cache_dir}"/>
+                    </elseActionList>
+                </if>
+                <setup component="ids.server" msg="Deploying IDS Server"/>
+                <dirName>
+                    <path>${ids_filesCheck_lastIdFile}</path>
+                    <variable>dir</variable>
+                </dirName>
+                <if>
+                    <actionList>
+                        <createDirectory path="${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${dir}"/>
+                    </actionList>
+                    <conditionRuleList>
+                        <regExMatch logic="matches" negate="1" text="${dir}">
+                            <pattern>^[/\\].*$</pattern>
+                        </regExMatch>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <createDirectory path="${dir}"/>
+                    </elseActionList>
+                </if>
+                <dirName>
+                    <path>${ids_filesCheck_errorLog}</path>
+                    <variable>dir</variable>
+                </dirName>
+                <if>
+                    <actionList>
+                        <createDirectory path="${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${dir}"/>
+                    </actionList>
+                    <conditionRuleList>
+                        <regExMatch logic="matches" negate="1" text="${dir}">
+                            <pattern>^[/\\].*$</pattern>
+                        </regExMatch>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <createDirectory path="${dir}"/>
+                    </elseActionList>
+                </if>
             </postInstallationActionList>
         </component>
         <component>

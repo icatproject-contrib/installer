@@ -119,7 +119,7 @@ class IcatClient(object):
         
 args = sys.argv
 if len(args) < 4 or len(args) % 2 != 0:
-    print >> sys.stderr, "\nThis must have three fixed arguments: url, file and plugin mnemonic\nfollowed by pairs of arguments to represent the credentials. For example\n\n    ", args[0], "https://example.com:8181 db username root password guess\n"
+    print >> sys.stderr, "\nThis must have three fixed arguments: url, file and plugin mnemonic\nfollowed by pairs of arguments to represent the credentials. For example\n\n    ", args[0], "https://example.com:8181 importfile db username root password guess\n"
     sys.exit(1)
 
 url = args[1]

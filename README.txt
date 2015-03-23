@@ -1,5 +1,5 @@
-You should now have ICAT installed with your selected authenticators, 
-along with an IDS and TopCAT configured to see that ICAT and IDS.
+You should now have ICAT installed with your selected authenticators 
+and any other components you chose to install.
 
 The installation log will be found in the installation directory you chose.
 
