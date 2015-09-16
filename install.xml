@@ -1,7 +1,7 @@
 <project>
     <shortName>icat</shortName>
     <fullName>ICAT</fullName>
-    <version>1.0</version>
+    <version>2.0</version>
     <readmeFile>README.txt</readmeFile>
     <licenseFile>LICENSE.txt</licenseFile>
     <leftImage>logo.gif</leftImage>
@@ -267,15 +267,14 @@
                 </throwError>
             </initializationActionList>
             <parameterList>
-                <passwordParameter>
+                <stringParameter>
                     <name>glassfish_password</name>
                     <title> Glassfish admin account</title>
                     <description>Password</description>
                     <explanation>Glassfish will be installed with the admin password you specify.</explanation>
-                    <value></value>
+                    <value>${default_password}</value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
-                    <descriptionRetype>Retype password</descriptionRetype>
                     <width>20</width>
                     <ruleList>
                         <compareValues>
@@ -284,7 +283,7 @@
                             <value2>0</value2>
                         </compareValues>
                     </ruleList>
-                </passwordParameter>
+                </stringParameter>
             </parameterList>
             <postInstallationActionList>
                 <if>
@@ -326,10 +325,23 @@
                         <asadmin cmd="delete-ssl --type http-listener http-listener-2" msg="Limit set of cifers in glassfish"/>
                         <asadmin cmd="delete-network-listener http-listener-2" msg="Limit set of cifers in glassfish"/>
                         <asadmin cmd="create-network-listener --listenerport 8181 --protocol http-listener-2 http-listener-2" msg="Limit set of cifers in glassfish"/>
-                        <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +SSL_RSA_WITH_RC4_128_MD5,+SSL_RSA_WITH_RC4_128_SHA http-listener-2" msg="Limit set of cifers in glassfish"/>
-                        <asadmin cmd="set configs.config.server-config.network-config.protocols.protocol.http-listener-2.http.request-timeout-seconds=-1">
-                            <msg></msg>
-                        </asadmin>
+                        <asadmin cmd="create-ssl --type http-listener --certname s1as --ssl3enabled=false --ssl3tlsciphers +TLS_RSA_WITH_AES_256_CBC_SHA,+TLS_RSA_WITH_AES_128_CBC_SHA http-listener-2" msg="Limit set of cifers in glassfish"/>
+                        <asadmin cmd="set configs.config.server-config.network-config.protocols.protocol.http-listener-2.http.request-timeout-seconds=-1" msg="set timeout"/>
+                        <if>
+                            <actionList>
+                                <asadmin msg="Ensure it stops on memory problems">
+                                    <cmd>create-jvm-options '-XX\:OnOutOfMemoryError=\"taskkill /F /PID %p\"'</cmd>
+                                </asadmin>
+                            </actionList>
+                            <conditionRuleList>
+                                <platformTest type="windows"/>
+                            </conditionRuleList>
+                            <elseActionList>
+                                <asadmin msg="Ensure it stops on memory problems">
+                                    <cmd>create-jvm-options '-XX\:OnOutOfMemoryError=\"kill -9 %p\"'</cmd>
+                                </asadmin>
+                            </elseActionList>
+                        </if>
                         <runProgram program="${keytool_executable}" programArguments="-export -keystore ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/keystore.jks -file  ${installdir.dos}/glassfish4/glassfish/domains/domain1/config/cert -storepass changeit -alias s1as" progressText="Extracting certificate"/>
                         <httpGet filename="${installdir}/glassfish4/glassfish/domains/domain1/lib/mysql-connector-java-5.1.30-bin.jar" progressText="Installing MySQL connector" url="http://www.icatproject.org/misc/install/mysql-connector-java-5.1.30-bin.jar"/>
                     </actionList>
@@ -812,8 +824,7 @@
                         <stringParameter name="authnDB" value="authn_db" default="authn_db">
                             <title>Database Authenticator Configuration Parameters</title>
                             <description>Name of MySQL Database to use for Database Authenticator</description>
-                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the
-                                required tables to it.
+                            <explanation>The data base will be created for you. If you use an existing database an attempt will be made to add the required tables to it.
                             </explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
@@ -881,10 +892,7 @@
                     <parameterList>
                         <stringParameter name="icatDB" value="icat" default="icat">
                             <description>Name of MySQL Database to use for ICAT server</description>
-                            <explanation>The data base for the ICAT server will be created for you.
-                                If you use an existing database an attempt will be
-                                made to add the required tables to it.
-                            </explanation>
+                            <explanation>The data base for the ICAT server will be created for you. If you use an existing database an attempt will be made to add the required tables to it.</explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
                             <ruleList>
@@ -894,10 +902,7 @@
                         <stringParameter>
                             <name>rootUserNames</name>
                             <description>rootUserNames</description>
-                            <explanation>Space separated list of users with "root" access to the ICAT server; for example: simple/root.
-                                The prefix must
-                                correspond to one of the authenticators you have selected.
-                            </explanation>
+                            <explanation>Space separated list of users with "root" access to the ICAT server; for example: simple/root. The prefix must correspond to one of the authenticators you have selected. If you have enabled the anon authenticator then anon/anon will work but this leaves your icat open to any intruder.</explanation>
                             <value>${rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -906,8 +911,7 @@
                         <stringParameter>
                             <name>maxEntities</name>
                             <description>maxEntities</description>
-                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.
-                            </explanation>
+                            <explanation>The maximum number of entities to return in an ICAT query. A request for more will throw an error.</explanation>
                             <value>${maxEntities}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -963,10 +967,11 @@
                         <throwError text="${program_stderr}"/>
                     </onErrorActionList>
                 </runProgram>
-                <prepare component="icat.server" componentVersion="${icat_server_version}" propertyRoot="icat" url="http://www.icatproject.org/misc/install/icat.server-${icat_server_version}-distro.zip">
+                <prepare component="icat.server" componentVersion="${icat_server_version}" propertyRoot="icat">
                     <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
                         dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${icatDB}
                     </setupProperties>
+                    <url></url>
                 </prepare>
                 <propertiesFileSet>
                     <file>${installdir}/icat.server/icat.properties</file>
@@ -1080,9 +1085,7 @@
                     <parameterList>
                         <stringParameter name="root_credentials">
                             <description>Root credentials</description>
-                            <explanation>Root credentials are specified by a space separated icat plugin name and credentials for a user included in
-                                the icat root user list.
-                            </explanation>
+                            <explanation>Root credentials are specified by a space separated icat plugin name and credentials for a user included in the icat root user list. This might be "simple username &lt;username&gt; password &lt;password&gt;" if your rootUserNames contains an entry starting simple/.  If you have taken the easy route and specified anon/anon in the rootUserNames then just enter "anon".</explanation>
                             <value></value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1093,7 +1096,7 @@
             </parameterList>
             <postInstallationActionList>
                 <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="seq">
-                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select SEQ_COUNT from SEQUENCE"</execArgs>
+                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select COUNT(*) from FACILITY"</execArgs>
                 </setInstallerVariableFromScriptOutput>
                 <if>
                     <progressText>Set up contents</progressText>
@@ -1132,9 +1135,7 @@
                 <parameterGroup>
                     <name>StorageFileConfiguration</name>
                     <title>IDS StorageFile Plugin Configuration</title>
-                    <explanation>The storage_file plugin for the IDS server can use two storage areas where the main one acts as a cache for the
-                        archive.
-                    </explanation>
+                    <explanation>The storage_file plugin for the IDS server can use two storage areas where the main one acts as a cache for the archive.</explanation>
                     <value></value>
                     <default></default>
                     <parameterList>
@@ -1239,10 +1240,7 @@
                     <parameterList>
                         <stringParameter name="ids_reader">
                             <description>reader</description>
-                            <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted
-                                to read all
-                                datasets, datafiles, investigations and facilities. For example: db username root password secret.
-                            </explanation>
+                            <explanation>A reader is specified by a space separated icat plugin name and credentials for a user permitted to read all datasets, datafiles, investigations and facilities. For example: db username reader password secret. If you have enabled the anon authenticator then you could simply specify anon but you would not normally wish to offer anonymous access to all your data.</explanation>
                             <value>${idsReader}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1250,10 +1248,7 @@
                         </stringParameter>
                         <stringParameter name="ids_rootUserNames">
                             <description>rootUserNames</description>
-                            <explanation>A space separated list of user names allowed to make the getServiceStatus call. For example simple/root
-                                where
-                                the prefix must correspond to an installed authenticator.
-                            </explanation>
+                            <explanation>A space separated list of user names allowed to make the getServiceStatus call. For example simple/root where the prefix must correspond to an installed authenticator. Once again if you have included the anon authenticator then you could enter anon/anon but this would allow any one to find out what the ids is doing.</explanation>
                             <value>${ids_rootUserNames}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1261,9 +1256,7 @@
                         </stringParameter>
                         <stringParameter name="ids_cache_dir">
                             <description>cache.dir</description>
-                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip
-                                files.
-                            </explanation>
+                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip files.</explanation>
                             <value>${ids_cache_dir}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1279,8 +1272,7 @@
                         </stringParameter>
                         <stringParameter name="ids_filesCheck_gapSeconds">
                             <description>filesCheck.gapSeconds</description>
-                            <explanation>The number of seconds to wait before launching a check of the next batch of datafiles or datasets.
-                            </explanation>
+                            <explanation>The number of seconds to wait before launching a check of the next batch of datafiles or datasets.</explanation>
                             <value>${ids_filesCheck_gapSeconds}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1319,8 +1311,50 @@
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" value="${ids_filesCheck_parallelCount}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" value="${ids_filesCheck_gapSeconds}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
-                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="ids_filesCheck_lastIdFile"/>
-                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="ids_filesCheck_errorLog"/>
+                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="tmp"/>
+                <stringModify text="${tmp}" variable="ids_filesCheck_lastIdFile"/>
+                <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="tmp"/>
+                <stringModify text="${tmp}" variable="ids_filesCheck_errorLog"/>
+                <if>
+                    <actionList>
+                        <dirName>
+                            <path>${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${ids_filesCheck_lastIdFile}</path>
+                            <variable>tdir</variable>
+                        </dirName>
+                    </actionList>
+                    <conditionRuleList>
+                        <regExMatch logic="matches" negate="1" text="${ids_filesCheck_lastIdFile}">
+                            <pattern>^[/\\].*$</pattern>
+                        </regExMatch>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <dirName>
+                            <path>${ids_filesCheck_lastIdFile}</path>
+                            <variable>tdir</variable>
+                        </dirName>
+                    </elseActionList>
+                </if>
+                <createDirectory path="${tdir}"/>
+                <if>
+                    <actionList>
+                        <dirName>
+                            <path>${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${ids_filesCheck_errorLog}</path>
+                            <variable>tdir</variable>
+                        </dirName>
+                    </actionList>
+                    <conditionRuleList>
+                        <regExMatch logic="matches" negate="1" text="${ids_filesCheck_errorLog}">
+                            <pattern>^[/\\].*$</pattern>
+                        </regExMatch>
+                    </conditionRuleList>
+                    <elseActionList>
+                        <dirName>
+                            <path>${ids_filesCheck_errorLog}</path>
+                            <variable>tdir</variable>
+                        </dirName>
+                    </elseActionList>
+                </if>
+                <createDirectory path="${tdir}"/>
                 <if>
                     <actionList>
                         <createDirectory path="${installdir.dos}/glassfish4/glassfish/domains/domain1/config/${ids_cache_dir}"/>
@@ -1393,23 +1427,20 @@
                     <parameterList>
                         <stringParameter name="topcatDB" value="topcat" default="topcat">
                             <description>Name of MySQL Database to use for TopCAT</description>
-                            <explanation>The database will be created for you. If you use an existing database an attempt will be made to add the
-                                required tables to it.
-                            </explanation>
+                            <explanation>The database will be created for you. If you use an existing database an attempt will be made to add the required tables to it.</explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
                         </stringParameter>
-                        <passwordParameter>
+                        <stringParameter>
                             <name>topcat_adminPassword</name>
                             <description>Password</description>
                             <explanation>Password for the TopCAT admin interface. The username will be admin. The password must contain at least
                                 one lower case letter, one upper case letter and a digit and be at least six characters long as this 
                                 provides access via a web browser and so should be more secure.
-                            </explanation>
-                            <value></value>
+                           </explanation>
+                            <value>Insecure0</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
-                            <descriptionRetype>Retype password</descriptionRetype>
                             <width>30</width>
                             <validationActionList>
                                 <throwError text="The password must contain at least one lower case letter, one upper case letter and a digit and be at least six characters long.">
@@ -1422,7 +1453,7 @@
                                     </ruleList>
                                 </throwError>
                             </validationActionList>
-                        </passwordParameter>
+                        </stringParameter>
                     </parameterList>
                     <ruleList>
                         <fileExists negate="1" path="${installdir}/topcat/topcat-setup.properties"/>
@@ -1523,11 +1554,12 @@
         <setInstallerVariable name="authn_db_version" value="1.1.2"/>
         <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
         <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
-        <setInstallerVariable name="icat_server_version" value="4.4.0"/>
-        <setInstallerVariable name="ids_server_version" value="1.3.1"/>
+        <setInstallerVariable name="icat_server_version" value="4.5.0"/>
+        <setInstallerVariable name="ids_server_version" value="1.4.0"/>
         <setInstallerVariable name="ids_storage_file_version" value="1.3.2"/>
         <setInstallerVariable name="topcat_version" value="1.12.0"/>
         <initvars/>
+        <setInstallerVariable name="default_password" value="insecure"/>
         <locate>
             <command>python</command>
             <variable>python_executable</variable>
@@ -1641,20 +1673,19 @@
                     <description>Username</description>
                     <explanation>MySQL user who will own the ICAT databases - MySQL account will be created if necessary</explanation>
                     <value>icat</value>
-                    <default>icat</default>
+                    <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
                     <width>20</width>
                 </stringParameter>
-                <passwordParameter>
+                <stringParameter>
                     <name>mysql_password</name>
                     <description>Password</description>
                     <explanation>Password of MySQL user who will own the ICAT databases - it will be updated if necessary.</explanation>
-                    <value></value>
+                    <value>${default_password}</value>
                     <default></default>
                     <allowEmptyValue>0</allowEmptyValue>
-                    <descriptionRetype>Retype password</descriptionRetype>
                     <width>20</width>
-                </passwordParameter>
+                </stringParameter>
             </parameterList>
         </parameterGroup>
     </parameterList>
