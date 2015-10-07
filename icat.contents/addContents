@@ -6,6 +6,10 @@ import getpass
 import urlparse
 import httplib
 import json
+import zlib
+import os
+import random
+import string
 from urllib import urlencode
 
 logging.basicConfig(level=logging.CRITICAL)
@@ -26,10 +30,11 @@ class IcatClient(object):
         It may also have a path if it is installed behind an apache front end. 
         """
         o = urlparse.urlparse(url)
-        self.icat_host = o.netloc
+        self.host = o.netloc
         path = o.path
         if not path.endswith("/"): path = path + "/"
-        self.path = path + "icat/"
+        self.icat = path + "icat/"
+        self.ids = path + "ids/"
         self.sessionId = None
  
     def import_data(self, stream, attributes="user" , duplicate="throw"):  
@@ -38,8 +43,8 @@ class IcatClient(object):
         parms["attributes"] = attributes
         parms["duplicate"] = duplicate 
         js = json.dumps(parms)
-        path = self.path + "port"
-        conn = httplib.HTTPSConnection(self.icat_host)
+        path = self.icat + "port"
+        conn = httplib.HTTPSConnection(self.host)
         conn.putrequest("POST", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -90,10 +95,10 @@ class IcatClient(object):
             cmap.append({key:value})
         js = json.dumps({"plugin" : plugin, "credentials": cmap})
      
-        path = self.path + "session"
+        path = self.icat + "session"
         parameters = urlencode({"json": js})
         
-        conn = httplib.HTTPSConnection(self.icat_host)
+        conn = httplib.HTTPSConnection(self.host)
         conn.putrequest("POST", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -115,8 +120,82 @@ class IcatClient(object):
             code = om["code"]
             message = om["message"]
             raise IcatException(code, message)
-        self.sessionId = json.loads(response.read())["sessionId"] 
+        self.sessionId = json.loads(response.read())["sessionId"]
         
+    def search(self, query):
+        parameters = urlencode({"sessionId": self.sessionId , "query": query})
+        path = self.icat + "entityManager?" + parameters
+        conn = httplib.HTTPSConnection(self.host)
+        conn.putrequest("GET", path, skip_accept_encoding=True)
+        conn.putheader("Cache-Control", "no-cache")
+        conn.putheader("Pragma", "no-cache")
+        conn.putheader("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")
+        conn.putheader("Connection", "keep-alive") 
+        conn.putheader('Content-Length', str(len(parameters)))    
+        conn.endheaders()
+        response = conn.getresponse()
+        rc = response.status
+        if (rc / 100 != 2):
+            try:
+                responseContent = response.read()
+                om = json.loads(responseContent)
+            except Exception:
+                raise IcatException("InternalException", responseContent)
+            code = om["code"]
+            message = om["message"]
+            raise IcatException(code, message)
+        return json.loads(response.read())
+        
+        
+    def put(self, inputStream, name, datasetId,
+            datafileFormatId, description=None, doi=None, datafileCreateTime=None,
+             datafileModTime=None):
+        """
+        Put the data in the inputStream into a data file and catalogue it. The client generates a
+        checksum which is compared to that produced by the server to detect any transmission errors.
+        """
+        parameters = {"sessionId": self.sessionId , "name":name, "datasetId": str(datasetId), "datafileFormatId": str(datafileFormatId)}
+        if description: parameters["description"] = description
+        if doi: parameters["doi"] = doi
+        if datafileCreateTime: parameters["datafileCreateTime"] = str(datafileCreateTime)
+        if datafileModTime: parameters["datafileModTime"] = str(datafileModTime)
+        if not inputStream: raise IdsException("BadRequestException", "Input stream is null")
+        
+        path = self.ids + "put?" + urlencode(parameters)
+        conn = httplib.HTTPSConnection(self.host)
+        conn.putrequest("PUT", path, skip_accept_encoding=True)
+        conn.putheader("Cache-Control", "no-cache")
+        conn.putheader("Pragma", "no-cache")
+        conn.putheader("Accept", "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2")
+        conn.putheader("Connection", "keep-alive") 
+        conn.putheader('Transfer-Encoding', 'chunked') 
+        conn.endheaders()
+        blocksize = 8192
+        datablock = inputStream.read(blocksize)
+        crc32 = 0
+        while datablock:
+            conn.send(hex(len(datablock))[2:] + "\r\n")
+            conn.send(datablock + "\r\n")
+            crc32 = zlib.crc32(datablock, crc32)
+            datablock = inputStream.read(blocksize)
+        crc = crc32 & 0xffffffff
+        conn.send("0\r\n\r\n")
+        response = conn.getresponse()
+        rc = response.status
+        if (rc / 100 != 2):
+            try:
+                responseContent = response.read()
+                om = json.loads(responseContent)
+            except Exception:
+                raise IdsException("InternalException", responseContent)
+            code = om["code"]
+            message = om["message"]
+            raise IcatException(code, message)
+            
+        om = json.loads(response.read())
+        if om["checksum"] != crc: raise IdsException("InternalException", "Error uploading - the checksum was not as expected")
+        return long(om["id"]);
+           
 args = sys.argv
 if len(args) < 4 or len(args) % 2 != 0:
     print >> sys.stderr, "\nThis must have three fixed arguments: url, file and plugin mnemonic\nfollowed by pairs of arguments to represent the credentials. For example\n\n    ", args[0], "https://example.com:8181 importfile db username root password guess\n"
@@ -132,3 +211,18 @@ client.login(plugin, args[4:])
 f = open(imp_file)
 client.import_data(f, attributes="all" , duplicate="ignore")
 f.close()
+dsid = client.search("Select ds.id from Dataset ds, ds.investigation inv, inv.facility f WHERE ds.name = 'ds3' AND inv.name='expt1' and inv.visitId = 'one' and f.name='DF'" )[0]
+fid = client.search("Select f.id from DatafileFormat f")[0]
+print dsid, fid
+for i in range(3):
+    f = open("temp", "w")
+    data = ""
+    for j in range(1000): data += str(j)
+    f.write(data)
+    f.close()
+    f = open("temp")
+    dfid = client.put(f, "file" + ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(16)]), dsid, fid)
+    f.close()
+os.remove("temp")
+
+

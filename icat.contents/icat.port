@@ -9,6 +9,9 @@ User (name:0, fullName:1)
 Facility ( name:0, daysUntilRelease:1, createId:2, createTime:3, fullName:4)
 "DF", 90, "Zorro", 1920-05-16T16:58:26.12Z, "Demo Facility"
 
+DatafileFormat (facility(name:0), name:1, version:2, type:3)
+"DF", "f1","1.0.0","text"
+
 InvestigationType (facility(name:0), name:1)
 "DF", "atype"
 "DF", "btype"
@@ -66,11 +69,6 @@ DatasetParameter(dataset(investigation(facility(name:0), name:1, visitId:2) , na
 "DF", "expt1", "one", "ds3", "birthday", "date", null, null, 2014-05-16T16:58:26.12Z
 "DF", "expt1", "one", "ds3", "current" , "amps", null, 150, null
 
-Datafile(dataset(investigation(facility(name:0), name:1, visitId:2), name:3), name:4, fileSize:5)
-"DF", "expt1", "one", "ds2", "df1", 12345
-"DF", "expt1", "one", "ds2", "df2", 12345
-"DF", "expt1", "one", "ds2", "df3", 12345
-
 Application(facility(name:0), name:1, version:2)
 "DF", "aprog", "1.2.3"
 "DF", "aprog", "1.2.6"
@@ -80,14 +78,9 @@ DataCollection(?:0)
 "b"
 "c"
 
-DataCollectionDatafile(datafile(dataset(investigation(facility(name:0), name:1, visitId:2), name:3), name:4), dataCollection(?:5))
-"DF", "expt1", "one", "ds2", "df1",  "a"
-"DF", "expt1", "one", "ds2", "df2",  "b"
+DataCollectionDataset(dataset(investigation(facility(name:0), name:1, visitId:2), name:3),  dataCollection(?:4))
+"DF", "expt1", "one", "ds1", "a"
+"DF", "expt1", "one", "ds2", "b"
 
 Job(application(facility(name:0), name:1, version:2), inputDataCollection(?:3), outputDataCollection(?:4))
 "DF", "aprog", "1.2.3", "a", "b"
-
-
-
-
-

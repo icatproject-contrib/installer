@@ -1023,8 +1023,6 @@
                         <exit exitCode="1"/>
                     </onErrorActionList>
                 </runProgram>
-                <asadmin cmd="stop-domain domain1" msg="Restart domain after deploying ICAT"/>
-                <asadmin cmd="start-domain domain1" msg="Restart domain after deploying ICAT"/>
             </postInstallationActionList>
             <preInstallationActionList>
                 <runProgram>
@@ -1050,81 +1048,7 @@
                 </runProgram>
             </preInstallationActionList>
         </component>
-        <component>
-            <name>icat_contents</name>
-            <description>ICAT Demo Contents</description>
-            <canBeEdited>1</canBeEdited>
-            <selected>1</selected>
-            <show>1</show>
-            <folderList>
-                <folder>
-                    <description></description>
-                    <destination>${installdir}/icat.contents</destination>
-                    <name>icat_contents</name>
-                    <platforms>all</platforms>
-                    <distributionFileList>
-                        <distributionFile allowWildcards="1">
-                            <origin>icat.contents/*</origin>
-                        </distributionFile>
-                    </distributionFileList>
-                    <ruleList>
-                        <fileExists>
-                            <negate>1</negate>
-                            <path>${installdir}/icat.contents</path>
-                        </fileExists>
-                    </ruleList>
-                </folder>
-            </folderList>
-            <parameterList>
-                <parameterGroup>
-                    <name>ICATContentsConfiguration</name>
-                    <title>ICAT Contents Configuration</title>
-                    <explanation></explanation>
-                    <value></value>
-                    <default></default>
-                    <parameterList>
-                        <stringParameter name="root_credentials">
-                            <description>Root credentials</description>
-                            <explanation>Root credentials are specified by a space separated icat plugin name and credentials for a user included in the icat root user list. This might be "simple username &lt;username&gt; password &lt;password&gt;" if your rootUserNames contains an entry starting simple/.  If you have taken the easy route and specified anon/anon in the rootUserNames then just enter "anon".</explanation>
-                            <value></value>
-                            <default></default>
-                            <allowEmptyValue>0</allowEmptyValue>
-                            <width>30</width>
-                        </stringParameter>
-                    </parameterList>
-                </parameterGroup>
-            </parameterList>
-            <postInstallationActionList>
-                <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="seq">
-                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select COUNT(*) from FACILITY"</execArgs>
-                </setInstallerVariableFromScriptOutput>
-                <if>
-                    <progressText>Set up contents</progressText>
-                    <actionList>
-                        <showQuestion default="no">
-                            <text>The database has already been used. Do you want to attempt to install demo data anyway?</text>
-                            <variable>overwrite</variable>
-                        </showQuestion>
-                        <setInstallerVariable name="seq" value="0">
-                            <ruleList>
-                                <compareText logic="equals" text="${overwrite}" value="yes"/>
-                            </ruleList>
-                        </setInstallerVariable>
-                    </actionList>
-                    <conditionRuleList>
-                        <compareText logic="equals" negate="1" text="${seq}" value="0"/>
-                    </conditionRuleList>
-                </if>
-                <runProgram workingDirectory="${installdir}/icat.contents">
-                    <program>${python_executable}</program>
-                    <programArguments>addContents https://${machine_fqdn}:8181 icat.port ${root_credentials}</programArguments>
-                    <progressText>Populating ICAT Server</progressText>
-                    <ruleList>
-                        <compareText logic="equals" text="${seq}" value="0"/>
-                    </ruleList>
-                </runProgram>
-            </postInstallationActionList>
-        </component>
+   
         <component>
             <name>ids_storage_file</name>
             <description>IDS storage_file plugin</description>
@@ -1405,6 +1329,81 @@
                 </if>
             </postInstallationActionList>
         </component>
+             <component>
+            <name>icat_contents</name>
+            <description>ICAT Demo Contents</description>
+            <canBeEdited>1</canBeEdited>
+            <selected>1</selected>
+            <show>1</show>
+            <folderList>
+                <folder>
+                    <description></description>
+                    <destination>${installdir}/icat.contents</destination>
+                    <name>icat_contents</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile allowWildcards="1">
+                            <origin>icat.contents/*</origin>
+                        </distributionFile>
+                    </distributionFileList>
+                    <ruleList>
+                        <fileExists>
+                            <negate>1</negate>
+                            <path>${installdir}/icat.contents</path>
+                        </fileExists>
+                    </ruleList>
+                </folder>
+            </folderList>
+            <parameterList>
+                <parameterGroup>
+                    <name>ICATContentsConfiguration</name>
+                    <title>ICAT Contents Configuration</title>
+                    <explanation></explanation>
+                    <value></value>
+                    <default></default>
+                    <parameterList>
+                        <stringParameter name="root_credentials">
+                            <description>Root credentials</description>
+                            <explanation>Root credentials are specified by a space separated icat plugin name and credentials for a user included in the icat root user list. This might be "simple username &lt;username&gt; password &lt;password&gt;" if your rootUserNames contains an entry starting simple/.  If you have taken the easy route and specified anon/anon in the rootUserNames then just enter "anon".</explanation>
+                            <value></value>
+                            <default></default>
+                            <allowEmptyValue>0</allowEmptyValue>
+                            <width>30</width>
+                        </stringParameter>
+                    </parameterList>
+                </parameterGroup>
+            </parameterList>
+            <postInstallationActionList>
+                <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="seq">
+                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${icatDB} -N -B -e "select COUNT(*) from FACILITY"</execArgs>
+                </setInstallerVariableFromScriptOutput>
+                <if>
+                    <progressText>Set up contents</progressText>
+                    <actionList>
+                        <showQuestion default="no">
+                            <text>The database has already been used. Do you want to attempt to install demo data anyway?</text>
+                            <variable>overwrite</variable>
+                        </showQuestion>
+                        <setInstallerVariable name="seq" value="0">
+                            <ruleList>
+                                <compareText logic="equals" text="${overwrite}" value="yes"/>
+                            </ruleList>
+                        </setInstallerVariable>
+                    </actionList>
+                    <conditionRuleList>
+                        <compareText logic="equals" negate="1" text="${seq}" value="0"/>
+                    </conditionRuleList>
+                </if>
+                <runProgram workingDirectory="${installdir}/icat.contents">
+                    <program>${python_executable}</program>
+                    <programArguments>addContents https://${machine_fqdn}:8181 icat.port ${root_credentials}</programArguments>
+                    <progressText>Populating ICAT Server</progressText>
+                    <ruleList>
+                        <compareText logic="equals" text="${seq}" value="0"/>
+                    </ruleList>
+                </runProgram>
+            </postInstallationActionList>
+        </component>
         <component>
             <name>topcat</name>
             <description>TopCAT</description>
@@ -1554,10 +1553,10 @@
         <setInstallerVariable name="authn_db_version" value="1.1.2"/>
         <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
         <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
-        <setInstallerVariable name="icat_server_version" value="4.5.0"/>
+        <setInstallerVariable name="icat_server_version" value="4.5.1"/>
         <setInstallerVariable name="ids_server_version" value="1.4.0"/>
         <setInstallerVariable name="ids_storage_file_version" value="1.3.2"/>
-        <setInstallerVariable name="topcat_version" value="1.12.0"/>
+        <setInstallerVariable name="topcat_version" value="1.13.0"/>
         <initvars/>
         <setInstallerVariable name="default_password" value="insecure"/>
         <locate>
