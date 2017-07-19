@@ -94,10 +94,10 @@ for line in out.splitlines():
 
 if exists:
     if running:
-        executeGood("asadmin stop-domain " + domain)
+        executeGood("asadmin stop-domain --kill " + domain)
     executeGood("asadmin delete-domain " + domain)
 
-os.system("asadmin -W " + tfile + " --user admin create-domain --savelogin " + domain)
+executeGood("asadmin -W " + tfile + " --user admin create-domain --savelogin " + domain)
 executeGood("asadmin start-domain " + domain)
 executeGood("asadmin enable-secure-admin")
 
@@ -120,12 +120,11 @@ else:
 
 dq = '\\"'
 executeGood("asadmin create-jvm-options '-XX\:OnOutOfMemoryError=" + dq + cmd + dq +"'")
-executeGood("asadmin stop-domain " + domain)
+executeGood("asadmin stop-domain --kill " + domain)
 executeGood("asadmin start-domain " + domain)
 executeGood('asadmin set server.http-service.access-log.format="common"')
 executeGood('asadmin set server.http-service.access-logging-enabled=true')
 executeGood('asadmin set server.thread-pools.thread-pool.http-thread-pool.max-thread-pool-size=128')
-executeGood('asadmin set configs.config.server-config.cdi-service.enable-implicit-cdi=false')
 executeGood('asadmin set server.ejb-container.property.disable-nonportable-jndi-names="true"')
 executeGood('asadmin delete-ssl --type http-listener http-listener-2')
 executeGood('asadmin delete-network-listener http-listener-2')
