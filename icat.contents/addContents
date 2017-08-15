@@ -36,6 +36,7 @@ class IcatClient(object):
         self.icat = path + "icat/"
         self.ids = path + "ids/"
         self.sessionId = None
+        self.secure = o.scheme == "https"
  
     def import_data(self, stream, attributes="user" , duplicate="throw"):  
         parms = {}
@@ -44,7 +45,10 @@ class IcatClient(object):
         parms["duplicate"] = duplicate 
         js = json.dumps(parms)
         path = self.icat + "port"
-        conn = httplib.HTTPSConnection(self.host)
+        if self.secure:
+            conn = httplib.HTTPSConnection(self.host)
+        else:
+            conn = httplib.HTTPConnection(self.host)
         conn.putrequest("POST", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -98,7 +102,10 @@ class IcatClient(object):
         path = self.icat + "session"
         parameters = urlencode({"json": js})
         
-        conn = httplib.HTTPSConnection(self.host)
+        if self.secure:
+            conn = httplib.HTTPSConnection(self.host)
+        else:
+            conn = httplib.HTTPConnection(self.host)
         conn.putrequest("POST", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -125,7 +132,10 @@ class IcatClient(object):
     def search(self, query):
         parameters = urlencode({"sessionId": self.sessionId , "query": query})
         path = self.icat + "entityManager?" + parameters
-        conn = httplib.HTTPSConnection(self.host)
+        if self.secure:
+            conn = httplib.HTTPSConnection(self.host)
+        else:
+            conn = httplib.HTTPConnection(self.host)
         conn.putrequest("GET", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -162,7 +172,10 @@ class IcatClient(object):
         if not inputStream: raise IdsException("BadRequestException", "Input stream is null")
         
         path = self.ids + "put?" + urlencode(parameters)
-        conn = httplib.HTTPSConnection(self.host)
+        if self.secure:
+            conn = httplib.HTTPSConnection(self.host)
+        else:
+            conn = httplib.HTTPConnection(self.host)
         conn.putrequest("PUT", path, skip_accept_encoding=True)
         conn.putheader("Cache-Control", "no-cache")
         conn.putheader("Pragma", "no-cache")
@@ -211,7 +224,7 @@ client.login(plugin, args[4:])
 f = open(imp_file)
 client.import_data(f, attributes="all" , duplicate="ignore")
 f.close()
-dsid = client.search("Select ds.id from Dataset ds, ds.investigation inv, inv.facility f WHERE ds.name = 'ds3' AND inv.name='expt1' and inv.visitId = 'one' and f.name='DF'" )[0]
+dsid = client.search("Select ds.id from Dataset ds, ds.investigation inv, inv.facility f WHERE ds.name = 'ds3' AND inv.name='expt1' and inv.visitId = 'one' and f.name='DF'")[0]
 fid = client.search("Select f.id from DatafileFormat f")[0]
 print dsid, fid
 for i in range(3):

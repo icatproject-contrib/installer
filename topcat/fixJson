@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import json
+import sys
+
+url = sys.argv[1]
+authns = sys.argv[2:]
+
+with open("topcat.json") as f:
+    obj = json.load(f)
+
+fac = obj["facilities"][0]
+fac["idsUrl"] = url
+
+ats = fac["authenticationTypes"] = []
+dt = fac["downloadTransportTypes"][0]
+dt["idsUrl"] = url
+
+for authn in authns:
+    ats.append({'plugin': authn, 'title': authn})
+
+with open("topcat.json", "w") as f:
+    json.dump(obj, f, indent = 2)

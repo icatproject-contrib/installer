@@ -1,7 +1,7 @@
 <project>
     <shortName>icat</shortName>
     <fullName>ICAT</fullName>
-    <version>2.0</version>
+    <version>3.0</version>
     <readmeFile>README.txt</readmeFile>
     <licenseFile>LICENSE.txt</licenseFile>
     <leftImage>logo.gif</leftImage>
@@ -19,7 +19,7 @@
                         <mathExpression text="${n} + 1" variable="n"/>
                     </actionList>
                     <conditionRuleList>
-                        <compareValues logic="less" value1="${n}" value2="5"/>
+                        <compareValues logic="less" value1="${n}" value2="4"/>
                     </conditionRuleList>
                 </while>
                 <setInstallerVariable name="provider_url" value=""/>
@@ -31,7 +31,7 @@
                 <setInstallerVariable name="archiveDir" value="${user_home_directory}/ids/archive"/>
                 <setInstallerVariable name="ids_reader" value=""/>
                 <setInstallerVariable name="ids_rootUserNames" value=""/>
-                <setInstallerVariable name="ids_cache_dir" value="../data/ids/cache"/>
+                <setInstallerVariable name="ids_cache_dir" value="${user_home_directory}/ids/cache"/>
                 <setInstallerVariable name="ids_filesCheck_parallelCount" value="5"/>
                 <setInstallerVariable name="ids_filesCheck_gapSeconds" value="5"/>
             </actionList>
@@ -43,7 +43,7 @@
                 <if>
                     <conditionRuleEvaluationLogic>or</conditionRuleEvaluationLogic>
                     <actionList>
-                        <setInstallerVariable name="url" value="http://www.icatproject.org/mvn/repo/org/icatproject/${component}/${componentVersion}/${component}-${componentVersion}-distro.zip">
+                        <setInstallerVariable name="url" value="http://repo.icatproject.org/repo/org/icatproject/${component}/${componentVersion}/${component}-${componentVersion}-distro.zip">
                             <ruleList>
                                 <compareText>
                                     <logic>equals</logic>
@@ -59,7 +59,9 @@
                         <httpGet filename="${system_temp_directory}/${tname}" progressText="Fetching distro for ${component}" url="${url}"/>
                         <unzip destinationDirectory="${installdir}" zipFile="${system_temp_directory}/${tname}"/>
                         <writeFile path="${installdir}/${component}/${propertyRoot}-setup.properties">
-                            <text>glassfish=${installdir.dos}/glassfish4
+                            <text>secure = false
+                                container = Glassfish
+                                home=${installdir.dos}/glassfish4
                                 port=4848
                                 ${setupProperties}
                             </text>
@@ -406,6 +408,21 @@
                             </ruleList>
                         </throwError>
                         <getProcessUsingPort>
+                            <port>8080</port>
+                            <variable>glassfish_http</variable>
+                        </getProcessUsingPort>
+                        <throwError>
+                            <text>Port 8080 is in use by ${glassfish_http}</text>
+                            <ruleList>
+                                <compareText>
+                                    <logic>equals</logic>
+                                    <negate>1</negate>
+                                    <text>${glassfish_http}</text>
+                                    <value></value>
+                                </compareText>
+                            </ruleList>
+                        </throwError>
+                        <getProcessUsingPort>
                             <port>8181</port>
                             <variable>glassfish_https</variable>
                         </getProcessUsingPort>
@@ -451,10 +468,10 @@
                     <selected>1</selected>
                     <show>1</show>
                     <postInstallationActionList>
-                        <prepare component="authn_anon" componentVersion="${authn_anon_version}" propertyRoot="authn_anon" setupProperties="">
+                        <prepare component="authn.anon" componentVersion="${authn_anon_version}" propertyRoot="authn_anon" setupProperties="">
                             <url></url>
                         </prepare>
-                        <setup component="authn_anon" msg="Deploying ANON Authenticator"/>
+                        <setup component="authn.anon" msg="Deploying ANON Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -576,32 +593,6 @@
                                         </stringParameter>
                                     </parameterList>
                                 </parameterGroup>
-                                <parameterGroup>
-                                    <name>SIMPLEConfigurationUser4</name>
-                                    <explanation>User 5</explanation>
-                                    <value></value>
-                                    <default></default>
-                                    <parameterList>
-                                        <stringParameter>
-                                            <name>user4</name>
-                                            <description>Name</description>
-                                            <explanation></explanation>
-                                            <value>${user4}</value>
-                                            <default></default>
-                                            <allowEmptyValue>1</allowEmptyValue>
-                                            <width>30</width>
-                                        </stringParameter>
-                                        <stringParameter>
-                                            <name>password4</name>
-                                            <description>Password</description>
-                                            <explanation></explanation>
-                                            <value>${password4}</value>
-                                            <default></default>
-                                            <allowEmptyValue>1</allowEmptyValue>
-                                            <width>119</width>
-                                        </stringParameter>
-                                    </parameterList>
-                                </parameterGroup>
                             </parameterList>
                             <preShowPageActionList>
                                 <if>
@@ -609,7 +600,7 @@
                                         <if>
                                             <actionList>
                                                 <propertiesFileGet>
-                                                    <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                                    <file>${installdir}/authn.simple/authn_simple.properties</file>
                                                     <key>user.list</key>
                                                     <variable>user_list</variable>
                                                 </propertiesFileGet>
@@ -620,7 +611,7 @@
                                                     <actionList>
                                                         <setInstallerVariable name="user${n}" value="${name}"/>
                                                         <propertiesFileGet>
-                                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                                            <file>${installdir}/authn.simple/authn_simple.properties</file>
                                                             <key>user.${name}.password</key>
                                                             <variable>upw</variable>
                                                         </propertiesFileGet>
@@ -631,7 +622,7 @@
                                             </actionList>
                                             <conditionRuleList>
                                                 <fileExists>
-                                                    <path>${installdir}/authn_simple/authn_simple.properties</path>
+                                                    <path>${installdir}/authn.simple/authn_simple.properties</path>
                                                 </fileExists>
                                             </conditionRuleList>
                                         </if>
@@ -645,7 +636,7 @@
                         </parameterGroup>
                     </parameterList>
                     <postInstallationActionList>
-                        <prepare component="authn_simple" componentVersion="${authn_simple_version}" propertyRoot="authn_simple" setupProperties="">
+                        <prepare component="authn.simple" componentVersion="${authn_simple_version}" propertyRoot="authn_simple" setupProperties="">
                             <url></url>
                         </prepare>
                         <setInstallerVariable name="n" value="0"/>
@@ -656,7 +647,7 @@
                                     <actionList>
                                         <setInstallerVariable name="tpass" value="${password${n}}"/>
                                         <setInstallerVariableFromScriptOutput abortOnError="0" exec="${python_executable}" name="password${n}">
-                                            <execArgs>-c "import crypt; print crypt.crypt('${tpass}')"</execArgs>
+                                            <execArgs>-c "import crypt; print crypt.crypt('${tpass}','z1')"</execArgs>
                                             <showMessageOnError>0</showMessageOnError>
                                             <onErrorActionList>
                                                 <setInstallerVariable name="password${n}" value="${tpass}"/>
@@ -671,9 +662,11 @@
                                             </ruleList>
                                         </setInstallerVariableFromScriptOutput>
                                         <propertiesFileSet>
-                                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                                            <file>${installdir}/authn.simple/authn_simple.properties</file>
                                             <key>user.${user${n}}.password</key>
-                                            <value>${password${n}}</value>
+
+                                            <!--   <value>${password${n}}</value> -->
+                                            <value>${tpass}</value>
                                         </propertiesFileSet>
                                         <setInstallerVariable name="user_list" value="${user_list} ${user${n}}"/>
                                     </actionList>
@@ -684,15 +677,15 @@
                                 <mathExpression text="${n} + 1" variable="n"/>
                             </actionList>
                             <conditionRuleList>
-                                <compareValues logic="less" value1="${n}" value2="5"/>
+                                <compareValues logic="less" value1="${n}" value2="4"/>
                             </conditionRuleList>
                         </while>
                         <propertiesFileSet>
-                            <file>${installdir}/authn_simple/authn_simple.properties</file>
+                            <file>${installdir}/authn.simple/authn_simple.properties</file>
                             <key>user.list</key>
                             <value>${user_list}</value>
                         </propertiesFileSet>
-                        <setup component="authn_simple" msg="Deploying Simple Authenticator"/>
+                        <setup component="authn.simple" msg="Deploying Simple Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -770,7 +763,7 @@
                                                     <variables>prop</variables>
                                                     <actionList>
                                                         <propertiesFileGet>
-                                                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                                                            <file>${installdir}/authn.ldap/authn_ldap.properties</file>
                                                             <key>${prop}</key>
                                                             <variable>${prop}</variable>
                                                         </propertiesFileGet>
@@ -778,7 +771,7 @@
                                                 </foreach>
                                             </actionList>
                                             <conditionRuleList>
-                                                <fileExists path="${installdir}/authn_ldap/authn_ldap.properties"/>
+                                                <fileExists path="${installdir}/authn.ldap/authn_ldap.properties"/>
                                             </conditionRuleList>
                                         </if>
                                         <setInstallerVariable name="authnLdapPagesInited" value="1"/>
@@ -791,26 +784,26 @@
                         </parameterGroup>
                     </parameterList>
                     <postInstallationActionList>
-                        <prepare component="authn_ldap" componentVersion="${authn_ldap_version}" propertyRoot="authn_ldap" url="http://icatproject.org/misc/install/authn_ldap-${authn_ldap_version}-distro.zip">
+                        <prepare component="authn.ldap" componentVersion="${authn_ldap_version}" propertyRoot="authn_ldap">
                             <setupProperties></setupProperties>
+                            <url></url>
                         </prepare>
                         <propertiesFileSet>
-                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <file>${installdir}/authn.ldap/authn_ldap.properties</file>
                             <key>case</key>
                             <value>${case}</value>
                         </propertiesFileSet>
                         <propertiesFileSet>
-                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <file>${installdir}/authn.ldap/authn_ldap.properties</file>
                             <key>provider_url</key>
                             <value>${provider_url}</value>
                         </propertiesFileSet>
                         <propertiesFileSet>
-                            <file>${installdir}/authn_ldap/authn_ldap.properties</file>
+                            <file>${installdir}/authn.ldap/authn_ldap.properties</file>
                             <key>security_principal</key>
                             <value>${security_principal}</value>
                         </propertiesFileSet>
-                        <touchFile path="${installdir}/authn_ldap/configured"/>
-                        <setup component="authn_ldap" msg="Deploying LDAP Authenticator"/>
+                        <setup component="authn.ldap" msg="Deploying LDAP Authenticator"/>
                     </postInstallationActionList>
                 </component>
                 <component>
@@ -843,7 +836,7 @@
                         </runProgram>
                         <runProgram>
                             <program>${mysql_executable}</program>
-                            <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${authnDB}"
+                            <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${authnDB} DEFAULT CHARACTER SET utf8"
                             </programArguments>
                             <progressText>Configuring authn_db database</progressText>
                             <onErrorActionList>
@@ -852,13 +845,23 @@
                                 </throwError>
                             </onErrorActionList>
                         </runProgram>
-                        <prepare component="authn_db" componentVersion="${authn_db_version}" propertyRoot="authn_db">
-                            <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                                dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${authnDB}
+                        <prepare component="authn.db" componentVersion="${authn_db_version}" propertyRoot="authn_db">
+                            <setupProperties>
+                            db.driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                            db.url = jdbc:mysql://localhost:3306/${authnDB}
+                            db.username=${mysql_username}
+                            db.password=${mysql_password}
                             </setupProperties>
                             <url></url>
                         </prepare>
-                        <setup component="authn_db" msg="Deploying Database Authenticator"/>
+                        <runProgram>
+                            <abortOnError>0</abortOnError>
+                            <program>${installdir}/glassfish4/glassfish/bin/asadmin</program>
+                            <programArguments>undeploy authn.db-${authn_db_version}</programArguments>
+                            <progressText>Undeploy authn_db</progressText>
+                            <showMessageOnError>0</showMessageOnError>
+                        </runProgram>
+                        <setup component="authn.db" msg="Deploying Database Authenticator"/>
                     </postInstallationActionList>
                 </component>
             </componentList>
@@ -960,7 +963,7 @@
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${icatDB}"
+                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${icatDB} DEFAULT CHARACTER SET utf8"
                     </programArguments>
                     <progressText>Configuring icat database</progressText>
                     <onErrorActionList>
@@ -968,8 +971,10 @@
                     </onErrorActionList>
                 </runProgram>
                 <prepare component="icat.server" componentVersion="${icat_server_version}" propertyRoot="icat">
-                    <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${icatDB}
+                    <setupProperties>db.driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                        db.url = jdbc:mysql://localhost:3306/${icatDB}
+                        db.username=${mysql_username}
+                        db.password=${mysql_password}
                     </setupProperties>
                     <url></url>
                 </prepare>
@@ -1000,7 +1005,7 @@
                         <propertiesFileSet>
                             <file>${installdir}/icat.server/icat.properties</file>
                             <key>authn.${authn}.jndi</key>
-                            <value>java:global/authn_${authn}-${authn_${authn}_version}/${authn_upper}_Authenticator</value>
+                            <value>java:global/authn.${authn}-${authn_${authn}_version}/${authn_upper}_Authenticator</value>
                         </propertiesFileSet>
                     </actionList>
                 </foreach>
@@ -1048,7 +1053,6 @@
                 </runProgram>
             </preInstallationActionList>
         </component>
-   
         <component>
             <name>ids_storage_file</name>
             <description>IDS storage_file plugin</description>
@@ -1180,7 +1184,7 @@
                         </stringParameter>
                         <stringParameter name="ids_cache_dir">
                             <description>cache.dir</description>
-                            <explanation>The location (absolute or relative to the config directory of the domain) of a directory to hold mostly zip files.</explanation>
+                            <explanation>The location of a directory to hold mostly zip files.</explanation>
                             <value>${ids_cache_dir}</value>
                             <default></default>
                             <allowEmptyValue>0</allowEmptyValue>
@@ -1234,7 +1238,7 @@
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="cache.dir" value="${ids_cache_dir}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.parallelCount" value="${ids_filesCheck_parallelCount}"/>
                 <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="filesCheck.gapSeconds" value="${ids_filesCheck_gapSeconds}"/>
-                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="https://${machine_fqdn}:8181"/>
+                <propertiesFileSet file="${installdir}/ids.server/ids.properties" key="icat.url" value="http://${machine_fqdn}:8080"/>
                 <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.lastIdFile" variable="tmp"/>
                 <stringModify text="${tmp}" variable="ids_filesCheck_lastIdFile"/>
                 <propertiesFileGet file="${installdir}/ids.server/ids.properties" key="filesCheck.errorLog" variable="tmp"/>
@@ -1329,7 +1333,7 @@
                 </if>
             </postInstallationActionList>
         </component>
-             <component>
+        <component>
             <name>icat_contents</name>
             <description>ICAT Demo Contents</description>
             <canBeEdited>1</canBeEdited>
@@ -1396,7 +1400,7 @@
                 </if>
                 <runProgram workingDirectory="${installdir}/icat.contents">
                     <program>${python_executable}</program>
-                    <programArguments>addContents https://${machine_fqdn}:8181 icat.port ${root_credentials}</programArguments>
+                    <programArguments>addContents http://${machine_fqdn}:8080 icat.port ${root_credentials}</programArguments>
                     <progressText>Populating ICAT Server</progressText>
                     <ruleList>
                         <compareText logic="equals" text="${seq}" value="0"/>
@@ -1418,6 +1422,25 @@
                     </ruleList>
                 </throwError>
             </componentSelectionValidationActionList>
+            <folderList>
+                <folder>
+                    <description></description>
+                    <destination>${installdir}/topcat</destination>
+                    <name>topcat_contents</name>
+                    <platforms>all</platforms>
+                    <distributionFileList>
+                        <distributionFile allowWildcards="1">
+                            <origin>topcat/*</origin>
+                        </distributionFile>
+                    </distributionFileList>
+                    <ruleList>
+                        <fileExists>
+                            <negate>1</negate>
+                            <path>${installdir}/topcat</path>
+                        </fileExists>
+                    </ruleList>
+                </folder>
+            </folderList>
             <parameterList>
                 <parameterGroup value="" default="">
                     <name>TopCATConfiguration</name>
@@ -1429,29 +1452,6 @@
                             <explanation>The database will be created for you. If you use an existing database an attempt will be made to add the required tables to it.</explanation>
                             <allowEmptyValue>0</allowEmptyValue>
                             <width>30</width>
-                        </stringParameter>
-                        <stringParameter>
-                            <name>topcat_adminPassword</name>
-                            <description>Password</description>
-                            <explanation>Password for the TopCAT admin interface. The username will be admin. The password must contain at least
-                                one lower case letter, one upper case letter and a digit and be at least six characters long as this 
-                                provides access via a web browser and so should be more secure.
-                           </explanation>
-                            <value>Insecure0</value>
-                            <default></default>
-                            <allowEmptyValue>0</allowEmptyValue>
-                            <width>30</width>
-                            <validationActionList>
-                                <throwError text="The password must contain at least one lower case letter, one upper case letter and a digit and be at least six characters long.">
-                                    <ruleList>
-                                        <regExMatch>
-                                            <logic>does_not_match</logic>
-                                            <pattern>^(?=(?:\D*\d))(?=(?:[^a-z]*[a-z]))(?=(?:[^A-Z]*[A-Z])).{6,}$</pattern>
-                                            <text>${topcat_adminPassword}</text>
-                                        </regExMatch>
-                                    </ruleList>
-                                </throwError>
-                            </validationActionList>
                         </stringParameter>
                     </parameterList>
                     <ruleList>
@@ -1469,7 +1469,7 @@
                 </runProgram>
                 <runProgram>
                     <program>${mysql_executable}</program>
-                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${topcatDB}"
+                    <programArguments>-u ${mysql_username} -p${mysql_password.password} -N -B -e "create database if not exists ${topcatDB} DEFAULT CHARACTER SET utf8"
                     </programArguments>
                     <progressText>Configuring TopCAT database</progressText>
                     <onErrorActionList>
@@ -1478,85 +1478,60 @@
                         </throwError>
                     </onErrorActionList>
                 </runProgram>
-                <prepare component="topcat" componentVersion="${topcat_version}" propertyRoot="topcat" url="http://www.icatproject.org/mvn/repo/org/icatproject/TopCAT/${topcat_version}/TopCAT-${topcat_version}-distro.zip">
-                    <setupProperties>driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-                        dbProperties=user=${mysql_username}:password=${mysql_password}:databaseName=${topcatDB}
-                        topcatUrlRoot=
-                        topcatAdminUrlRoot=
-                        adminUsername=admin
-                        adminPassword=${topcat_adminPassword}
+                <prepare component="topcat" componentVersion="${topcat_version}" propertyRoot="topcat">
+                    <setupProperties>db.driver=com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+                        db.target      = mysql
+                        db.url         = jdbc:mysql://localhost:3306/${topcatDB}
+                        db.username    = ${mysql_username}
+                        db.password    = ${mysql_password}
+                        mail.enable = true
+                        mail.host=smtp.example.com
+                        mail.user=user@example.com
+                        mail.from=no-reply@example.com
+                        mail.property=mail.smtp.port="25":mail.smtp.from="no-reply@example.com"
                     </setupProperties>
+                    <url></url>
                 </prepare>
-                <setup component="topcat" msg="Deploying TopCAT"/>
-                <setInstallerVariableFromScriptOutput exec="${mysql_executable}" name="new">
-                    <execArgs>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "select SEQ_COUNT from SEQUENCE"</execArgs>
-                </setInstallerVariableFromScriptOutput>
-                <if>
+                <copyFile>
+                    <destination>${installdir}/topcat/topcat.css</destination>
+                    <origin>${installdir}/topcat/topcat.css.example.example</origin>
+                    <ruleList>
+                        <fileExists negate="1" path="${installdir}/topcat/topcat.css"/>
+                    </ruleList>
+                </copyFile>
+                <setInstallerVariable name="authn_list" value=""/>
+                <foreach>
+                    <values>db ldap anon simple</values>
+                    <variables>authn</variables>
                     <actionList>
-                        <runProgram program="${mysql_executable}">
-                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
-                                TOPCAT_ICAT_SERVER(ID, DOWNLOAD_PLUGIN_NAME, DOWNLOAD_SERVICE_URL, DOWNLOAD_TYPE, NAME, SERVER_URL, VERSION,
-                                ALLOW_UPLOAD, ALLOW_CREATE_DATASET) values (1, 'ids', 'https://${machine_fqdn}:8181', 'archived',
-                                '${machine_hostname}', 'https://${machine_fqdn}:8181/ICATService/ICAT?wsdl', 'v43', 1,1)"
-                            </programArguments>
-                        </runProgram>
-                        <setInstallerVariable name="n" value="0"/>
-                        <foreach>
-                            <values>db ldap anon simple</values>
-                            <variables>authn</variables>
-                            <actionList>
-                                <continue>
-                                    <ruleList>
-                                        <isFalse>
-                                            <value>${component(authn).component(authn_${authn}).selected}</value>
-                                        </isFalse>
-                                    </ruleList>
-                                </continue>
-                                <mathExpression text="${n} + 1" variable="n"/>
-                                <if>
-                                    <actionList>
-                                        <setInstallerVariable name="plugin" value="uk.ac.stfc.topcat.gwt.client.authentication.DefaultAuthenticationPlugin"/>
-                                    </actionList>
-                                    <conditionRuleList>
-                                        <compareText logic="equals" negate="1" text="${authn}" value="anon"/>
-                                    </conditionRuleList>
-                                    <elseActionList>
-                                        <setInstallerVariable name="plugin" value="uk.ac.stfc.topcat.gwt.client.authentication.AnonymousAuthenticationPlugin"/>
-                                    </elseActionList>
-                                </if>
-                                <runProgram program="${mysql_executable}">
-                                    <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "insert into
-                                        TOPCAT_ICAT_AUTHENTICATION(ID, AUTHENTICATION_TYPE, DISPLAY_NAME, PLUGIN_NAME, SERVER_ID) values (${n},
-                                        '${authn}', '${authn}', '${plugin}', 1)"
-                                    </programArguments>
-                                </runProgram>
-                            </actionList>
-                        </foreach>
-                        <runProgram program="${mysql_executable}">
-                            <programArguments>-u ${mysql_username} -p${mysql_password.password} ${topcatDB} -N -B -e "update SEQUENCE set SEQ_COUNT =
-                                ${n}"
-                            </programArguments>
-                        </runProgram>
+                        <continue>
+                            <ruleList>
+                                <isFalse>
+                                    <value>${component(authn).component(authn_${authn}).selected}</value>
+                                </isFalse>
+                            </ruleList>
+                        </continue>
+                        <setInstallerVariable name="authn_list" value="${authn_list} ${authn}"/>
                     </actionList>
-                    <conditionRuleList>
-                        <compareValues logic="equals" value1="${new}" value2="0"/>
-                    </conditionRuleList>
-                    <elseActionList>
-                        <showWarning text="The TopCAT database has already been setup so will not be modified."/>
-                    </elseActionList>
-                </if>
+                </foreach>
+                <runProgram workingDirectory="${installdir}/topcat">
+                    <program>${python_executable}</program>
+                    <programArguments>fixJson http://${machine_fqdn}:8080 ${authn_list}</programArguments>
+                    <progressText>Fixing topcat.json</progressText>
+                </runProgram>
+                <setup component="topcat" msg="Deploying TopCAT"/>
             </postInstallationActionList>
         </component>
     </componentList>
     <initializationActionList>
-        <setInstallerVariable name="authn_anon_version" value="1.0.2"/>
-        <setInstallerVariable name="authn_db_version" value="1.1.2"/>
-        <setInstallerVariable name="authn_ldap_version" value="1.1.0"/>
-        <setInstallerVariable name="authn_simple_version" value="1.0.1"/>
-        <setInstallerVariable name="icat_server_version" value="4.5.1"/>
-        <setInstallerVariable name="ids_server_version" value="1.4.0"/>
-        <setInstallerVariable name="ids_storage_file_version" value="1.3.2"/>
-        <setInstallerVariable name="topcat_version" value="1.13.0"/>
+        <setInstallerVariable name="authn_anon_version" value="1.1.1"/>
+        <setInstallerVariable name="authn_db_version" value="1.2.1"/>
+        <setInstallerVariable name="authn_ldap_version" value="1.2.0"/>
+        <setInstallerVariable name="authn_simple_version" value="1.1.0"/>
+        <setInstallerVariable name="icat_server_version" value="4.8.0"/>
+        <setInstallerVariable name="ids_server_version" value="1.7.0"/>
+        <setInstallerVariable name="ids_storage_file_version" value="1.3.3"/>
+        <setInstallerVariable name="topcat_version" value="2.2.1"/>
         <initvars/>
         <setInstallerVariable name="default_password" value="insecure"/>
         <locate>
@@ -1618,7 +1593,7 @@
         </throwError>
     </initializationActionList>
     <postUninstallationActionList>
-        <foreach values="authn_anon authn_ldap authn_db authn_simple icat.server ids.storage_file ids.server topcat" variables="comp">
+        <foreach values="authn.anon authn.ldap authn.db authn.simple icat.server ids.storage_file ids.server topcat" variables="comp">
             <actionList>
                 <deleteFile excludeFiles="*.properties" path="${installdir}/${comp}/*"/>
                 <deleteFile path="${installdir}/${comp}/*-setup.properties"/>
@@ -1628,6 +1603,7 @@
     </postUninstallationActionList>
     <allowComponentSelection>1</allowComponentSelection>
     <enableRollback>0</enableRollback>
+    <enableSslSupport>1</enableSslSupport>
     <enableTimestamp>1</enableTimestamp>
     <height>700</height>
     <installationLogFile>${installdir}/${project.shortName}-installation.log</installationLogFile>
